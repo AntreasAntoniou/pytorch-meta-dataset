@@ -3,6 +3,7 @@ import time
 import random
 import argparse
 from functools import partial
+from pprint import pformat
 from typing import Dict, Tuple
 
 import torch
@@ -113,7 +114,7 @@ def meta_val(
 
 def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     logger.info(f"==> Running process rank {rank}.")
-    logger.info([f"==> {k}={v}" for k, v in vars(args).items()])
+    logger.info(pformat(args))
     if torch.cuda.is_available():
         setup(args.port, rank, world_size)
     device: int = rank
