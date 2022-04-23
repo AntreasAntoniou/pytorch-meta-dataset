@@ -10,30 +10,24 @@ from ..utils import compute_confidence_interval, get_one_hot
 
 class Metric(object):
     def __init__(self, args: Namespace):
-        assert hasattr(self, 'name')
+        assert hasattr(self, "name")
 
     def __call__(self, *args, **kwargs):
         raise NotImplementedError
 
-    def plot(self,
-             ax: Axes,
-             iteration: int):
+    def plot(self, ax: Axes, iteration: int):
 
         raise NotImplementedError
 
 
 class ScalarMetric(Metric):
-    def __init__(self,
-                 name: str,
-                 args: Namespace):
+    def __init__(self, name: str, args: Namespace):
         self.values = torch.zeros(args.val_episodes, args.iter)
         self.name: str = name
 
         super().__init__(args)
 
-    def plot(self,
-             ax: Axes,
-             iteration: int) -> None:
+    def plot(self, ax: Axes, iteration: int) -> None:
         """
         Plot the metrics using the values filled up so far
         """
@@ -43,14 +37,10 @@ class ScalarMetric(Metric):
         ax.plot(x, mean)
         ax.fill_between(x, mean - std, mean + std, alpha=0.2)
         ax.set_title(self.name)
-        ax.set_xlabel('Iteration')
+        ax.set_xlabel("Iteration")
         ax.grid(True)
 
-    def update(self,
-               start: int,
-               end: int,
-               iteration: int,
-               **kwargs) -> None:
+    def update(self, start: int, end: int, iteration: int, **kwargs) -> None:
         """
         Update the internal value table of the metric
         """
@@ -63,11 +53,11 @@ class ScalarMetric(Metric):
 
 class Acc(ScalarMetric):
     def __init__(self, args: Namespace):
-        super().__init__('Accuracy', args)
+        super().__init__("Accuracy", args)
 
     def __call__(self, **kwargs):
-        preds = kwargs['preds']
-        gt = kwargs['gt']
+        preds = kwargs["preds"]
+        gt = kwargs["gt"]
 
         if isinstance(preds, torch.Tensor):
             preds = preds.detach().cpu().numpy()
@@ -83,67 +73,67 @@ class Acc(ScalarMetric):
 
 class MI(ScalarMetric):
     def __init__(self, args: Namespace):
-        super().__init__('Mutual information', args)
+        super().__init__("Mutual information", args)
 
     def __call__(self, **kwargs):
-        probs = kwargs['probs']
+        probs = kwargs["probs"]
 
-        cond_ent = - (probs * torch.log(probs + 1e-12)).sum(-1).mean(-1, keepdim=True)
-        ent = - (probs.mean(1) * torch.log(probs.mean(1) + 1e-12)).sum(-1, keepdim=True)
+        cond_ent = -(probs * torch.log(probs + 1e-12)).sum(-1).mean(-1, keepdim=True)
+        ent = -(probs.mean(1) * torch.log(probs.mean(1) + 1e-12)).sum(-1, keepdim=True)
 
         return ent - cond_ent
 
 
 class CondEnt(ScalarMetric):
     def __init__(self, args: Namespace):
-        super().__init__('Conditional Entropy', args)
+        super().__init__("Conditional Entropy", args)
 
     def __call__(self, **kwargs):
-        probs = kwargs['probs']
-        cond_ent = - (probs * torch.log(probs + 1e-12)).sum(2).mean(1, keepdim=True)
+        probs = kwargs["probs"]
+        cond_ent = -(probs * torch.log(probs + 1e-12)).sum(2).mean(1, keepdim=True)
 
         return cond_ent
 
 
 class MargEnt(ScalarMetric):
     def __init__(self, args: Namespace):
-        super().__init__('Marginal Entropy', args)
+        super().__init__("Marginal Entropy", args)
 
     def __call__(self, **kwargs):
-        probs = kwargs['probs']
-        ent = - (probs.mean(1) * torch.log(probs.mean(1) + 1e-12)).sum(1, keepdim=True)
+        probs = kwargs["probs"]
+        ent = -(probs.mean(1) * torch.log(probs.mean(1) + 1e-12)).sum(1, keepdim=True)
 
         return ent
 
 
 class XEnt(ScalarMetric):
     def __init__(self, args: Namespace):
-        super().__init__('Cross Entropy', args)
+        super().__init__("Cross Entropy", args)
 
     def __call__(self, **kwargs):
-        probs = kwargs['probs_s']
-        gt = kwargs['gt_s']
+        probs = kwargs["probs_s"]
+        gt = kwargs["gt_s"]
 
         num_classes = gt.unique().size(0)
 
         gt = get_one_hot(gt, num_classes)
-        xent_ent = - (gt * torch.log(probs + 1e-12)).sum(-1).mean(-1, keepdim=True)
+        xent_ent = -(gt * torch.log(probs + 1e-12)).sum(-1).mean(-1, keepdim=True)
 
         return xent_ent
 
 
 class LaplacianEnergy(ScalarMetric):
     def __init__(self, args: Namespace):
-        super().__init__('Laplacian Energy', args)
+        super().__init__("Laplacian Energy", args)
 
     def __call__(self, **kwargs):
         """
         Energy used in LaplacianShot
         """
-        Y = kwargs['Y']
-        kernel = kwargs['kernel']
-        unary = kwargs['unary']
-        lmd = kwargs['lmd']
+        Y = kwargs["Y"]
+        kernel = kwargs["kernel"]
+        unary = kwargs["unary"]
+        lmd = kwargs["lmd"]
 
         pairwise = kernel.dot(Y)
         temp = (unary * Y) + (-lmd * pairwise * Y)
@@ -154,19 +144,19 @@ class LaplacianEnergy(ScalarMetric):
 
 class MaxEigS(ScalarMetric):
     def __init__(self, args: Namespace):
-        super(MaxEigS, self).__init__('Max Eig S', args)
+        super(MaxEigS, self).__init__("Max Eig S", args)
 
     def __call__(self, **kwargs):
-        z = kwargs['z_s'].cpu()
-        probs_q = kwargs['probs_s'].cpu()  # [n_task, shot, K]
-        weights = kwargs['weights'].cpu()
+        z = kwargs["z_s"].cpu()
+        probs_q = kwargs["probs_s"].cpu()  # [n_task, shot, K]
+        weights = kwargs["weights"].cpu()
 
         n_tasks, shot, d = z.size()
         diff_s = z.unsqueeze(2) - weights.unsqueeze(1).detach()  # [n_task, shot, K, d]
         # assert diff_s.size() == (n_tasks, shot, K, d), (diff_s.size(), (n_tasks, shot, K, d))
 
-        H = (diff_s ** 2).sum(-1)  # [n_task, shot, K]
-        I = torch.ones_like(H) # [n_task, shot, K]
+        H = (diff_s**2).sum(-1)  # [n_task, shot, K]
+        I = torch.ones_like(H)  # [n_task, shot, K]
         p = probs_q.detach()  # [n_task, shot, K]
 
         hessian = p * (H - I) - (p**2) * H  # [n_task, shot, K]
@@ -178,18 +168,18 @@ class MaxEigS(ScalarMetric):
 
 class MaxEigQ(ScalarMetric):
     def __init__(self, args: Namespace):
-        super().__init__('Max Eig Q', args)
+        super().__init__("Max Eig Q", args)
 
     def __call__(self, **kwargs):
-        z = kwargs['z_q'].cpu()
-        probs_q = kwargs['probs'].cpu()  # [n_task, shot, K]
-        weights = kwargs['weights'].cpu()
+        z = kwargs["z_q"].cpu()
+        probs_q = kwargs["probs"].cpu()  # [n_task, shot, K]
+        weights = kwargs["weights"].cpu()
 
         n_tasks, shot, d = z.size()
         diff_s = z.unsqueeze(2) - weights.unsqueeze(1).detach()  # [n_task, shot, K, d]
         # assert diff_s.size() == (n_tasks, shot, K, d), (diff_s.size(), (n_tasks, shot, K, d))
-        H = (diff_s ** 2).sum(-1)  # [n_task, shot, K]
-        I = torch.ones_like(H) # [n_task, shot, K]
+        H = (diff_s**2).sum(-1)  # [n_task, shot, K]
+        I = torch.ones_like(H)  # [n_task, shot, K]
         p = probs_q.detach()  # [n_task, shot, K]
 
         hessian = p * (H - I) - (p**2) * H  # [n_task, shot, K]
@@ -205,15 +195,13 @@ class ConfMatrix(Metric):
         if not args.num_ways:
             raise ValueError("Confusion Matrix is only available for fixed tasks")
 
-        self.values = torch.zeros(args.val_episodes, args.iter, args.num_ways, args.num_ways)
+        self.values = torch.zeros(
+            args.val_episodes, args.iter, args.num_ways, args.num_ways
+        )
 
         super().__init__(args)
 
-    def update(self,
-               start,
-               end,
-               iteration,
-               **kwargs):
+    def update(self, start, end, iteration, **kwargs):
         value = self(**kwargs)
         self.values[start:end, iteration] = value.squeeze().cpu()
 
@@ -226,22 +214,26 @@ class ConfMatrix(Metric):
         returns :
             preds : torch.Tensor of shape [n_task, shot]
         """
-        preds = kwargs['preds']
-        gt = kwargs['gt']
+        preds = kwargs["preds"]
+        gt = kwargs["gt"]
 
         num_classes = gt.unique().size(0)
 
         one_hot_preds = get_one_hot(preds, num_classes)
         one_hot_gt = get_one_hot(gt, num_classes)  # [n_task, shot, num_classes]
 
-        conf = one_hot_preds.permute(0, 2, 1).matmul(one_hot_gt)  # [n_task, num_classes, num_classes]
+        conf = one_hot_preds.permute(0, 2, 1).matmul(
+            one_hot_gt
+        )  # [n_task, num_classes, num_classes]
         conf /= conf.sum(dim=(1, 2), keepdim=True)
         # conf /= one_hot_gt.sum(1, keepdim=True)  # [num_classes, num_classes]
 
         return conf.mean(0)
 
     def plot(self, ax: Axes, iteration: int):
-        conf = self.values[:iteration].mean(0)[-1]  # averaging the initial conf matrix over all tasks
+        conf = self.values[:iteration].mean(0)[
+            -1
+        ]  # averaging the initial conf matrix over all tasks
 
         sn.set(font_scale=1.4)
         sn.heatmap(conf, annot=True, annot_kws={"size": 10}, ax=ax)

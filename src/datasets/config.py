@@ -9,11 +9,10 @@ class DataConfig(object):
     """Common configuration options for creating data processing pipelines."""
 
     def __init__(self, args: argparse.Namespace):
-        """Initialize a DataConfig.
-        """
+        """Initialize a DataConfig."""
 
         # General info
-        self.path: Path = Path(os.getenv('RECORDS'))
+        self.path: Path = Path(os.getenv("RECORDS"))
         self.batch_size: int = args.batch_size
         self.val_batch_size: int = args.val_batch_size
         self.num_workers: int = args.num_workers
@@ -23,8 +22,8 @@ class DataConfig(object):
         self.image_size: Tuple[int, int] = args.image_size
         self.test_transforms: bool = args.test_transforms
         self.train_transforms: bool = args.train_transforms
-        self.norm_mean = model_configs[args.arch]['mean']
-        self.norm_std = model_configs[args.arch]['std']
+        self.norm_mean = model_configs[args.arch]["mean"]
+        self.norm_std = model_configs[args.arch]["std"]
         self.gaussian_noise_std = args.gaussian_noise_std
         self.jitter_amount = args.jitter_amount
 
@@ -84,31 +83,45 @@ class EpisodeDescriptionConfig(object):
             RuntimeError: if incompatible arguments are passed.
         """
         arg_groups = {
-            'num_ways': (args.num_ways,
-                         ('min_ways', 'max_ways_upper_bound'),
-                         (args.min_ways, args.max_ways_upper_bound)),
-            'num_query': (args.num_query,
-                          ('max_num_query',),
-                          (args.max_num_query,)),
-            'num_support': (args.num_support,  # noqa: E131
-                            ('max_support_set_size', 'max_support_size_contrib_per_class',
-                             'min_log_weight', 'max_log_weight'),
-                            (args.max_support_set_size, args.max_support_size_contrib_per_class,
-                             args.min_log_weight, args.max_log_weight)),
+            "num_ways": (
+                args.num_ways,
+                ("min_ways", "max_ways_upper_bound"),
+                (args.min_ways, args.max_ways_upper_bound),
+            ),
+            "num_query": (args.num_query, ("max_num_query",), (args.max_num_query,)),
+            "num_support": (
+                args.num_support,  # noqa: E131
+                (
+                    "max_support_set_size",
+                    "max_support_size_contrib_per_class",
+                    "min_log_weight",
+                    "max_log_weight",
+                ),
+                (
+                    args.max_support_set_size,
+                    args.max_support_size_contrib_per_class,
+                    args.min_log_weight,
+                    args.max_log_weight,
+                ),
+            ),
         }
 
         for first_arg_name, values in arg_groups.items():
             first_arg, required_arg_names, required_args = values
 
-            if ((first_arg is None) and any(arg is None for arg in required_args)):
+            if (first_arg is None) and any(arg is None for arg in required_args):
                 # Get name of the nones
-                none_arg_names = [name for var, name in zip(required_args, required_arg_names)
-                                  if var is None]
+                none_arg_names = [
+                    name
+                    for var, name in zip(required_args, required_arg_names)
+                    if var is None
+                ]
 
                 raise RuntimeError(
-                    'The following arguments: %s can not be None, since %s is None. '
-                    'Please ensure the following arguments of EpisodeDescriptionConfig are set: '
-                    '%s' % (none_arg_names, first_arg_name, none_arg_names))
+                    "The following arguments: %s can not be None, since %s is None. "
+                    "Please ensure the following arguments of EpisodeDescriptionConfig are set: "
+                    "%s" % (none_arg_names, first_arg_name, none_arg_names)
+                )
 
         self.num_ways: int = args.num_ways if args.num_ways > 0 else None
         self.num_support: int = args.num_support if args.num_support > 0 else None
@@ -117,7 +130,9 @@ class EpisodeDescriptionConfig(object):
         self.max_ways_upper_bound: int = args.max_ways_upper_bound
         self.max_num_query: int = args.max_num_query
         self.max_support_set_size: int = args.max_support_set_size
-        self.max_support_size_contrib_per_class: int = args.max_support_size_contrib_per_class
+        self.max_support_size_contrib_per_class: int = (
+            args.max_support_size_contrib_per_class
+        )
         self.min_log_weight: float = args.min_log_weight
         self.max_log_weight: float = args.max_log_weight
         self.ignore_dag_ontology: bool = args.ignore_dag_ontology

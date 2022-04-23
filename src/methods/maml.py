@@ -26,26 +26,27 @@ class MAML(FSmethod):
 
         super().__init__(args)
 
-    def forward(self,
-                model: torch.nn.Module,
-                support: Tensor,
-                query: Tensor,
-                y_s: Tensor,
-                y_q: Tensor,
-                metrics: Dict[str, Metric] = None,
-                task_ids: Tuple[int, int] = None) -> Tuple[Optional[Tensor], Tensor]:
+    def forward(
+        self,
+        model: torch.nn.Module,
+        support: Tensor,
+        query: Tensor,
+        y_s: Tensor,
+        y_q: Tensor,
+        metrics: Dict[str, Metric] = None,
+        task_ids: Tuple[int, int] = None,
+    ) -> Tuple[Optional[Tensor], Tensor]:
         iter_ = self.train_iter if self.training else self.iter
 
         model.train()
         device = torch.distributed.get_rank()
 
-        outer_loss = torch.tensor(0., device=device)
+        outer_loss = torch.tensor(0.0, device=device)
         soft_preds = torch.zeros_like(get_one_hot(y_q, y_s.unique().size(0)))
 
-        for task_idx, (x_s, y_support, x_q, y_query) in enumerate(zip(support,
-                                                                      y_s,
-                                                                      query,
-                                                                      y_q)):
+        for task_idx, (x_s, y_support, x_q, y_query) in enumerate(
+            zip(support, y_s, query, y_q)
+        ):
             params = None
             x_s, x_q = x_s.to(device), x_q.to(device)
 
@@ -54,9 +55,9 @@ class MAML(FSmethod):
                 inner_loss = F.cross_entropy(train_logit, y_support)
 
                 model.zero_grad()
-                params = self.gradient_update_parameters(model=model,
-                                                         loss=inner_loss,
-                                                         params=params)
+                params = self.gradient_update_parameters(
+                    model=model, loss=inner_loss, params=params
+                )
 
         if not self.training:  # if doing evaluation, put back the model in eval()
             model.eval()
@@ -69,10 +70,7 @@ class MAML(FSmethod):
 
         return outer_loss, soft_preds
 
-    def gradient_update_parameters(self,
-                                   model,
-                                   loss,
-                                   params=None) -> OrderedDict:
+    def gradient_update_parameters(self, model, loss, params=None) -> OrderedDict:
         """Update of the meta-parameters with one step of gradient descent on the
         loss function.
         Parameters
@@ -98,16 +96,16 @@ class MAML(FSmethod):
             gradient update wrt. the inner-loss.
         """
         if not isinstance(model, MetaModule):
-            raise ValueError('The model must be an instance of `torchmeta.modules.'
-                             'MetaModule`, got `{0}`'.format(type(model)))
+            raise ValueError(
+                "The model must be an instance of `torchmeta.modules."
+                "MetaModule`, got `{0}`".format(type(model))
+            )
 
         if params is None:
             params = OrderedDict(model.meta_named_parameters())
 
         create_graph = (not self.first_order) and self.training
-        grads = torch.autograd.grad(loss,
-                                    params.values(),
-                                    create_graph=create_graph)
+        grads = torch.autograd.grad(loss, params.values(), create_graph=create_graph)
 
         updated_params = OrderedDict()
 

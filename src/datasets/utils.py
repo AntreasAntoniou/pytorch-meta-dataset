@@ -14,6 +14,7 @@ def cycle_(iterable):
 
 class Split(enum.Enum):
     """The possible data splits."""
+
     TRAIN = 0
     VALID = 1
     TEST = 2

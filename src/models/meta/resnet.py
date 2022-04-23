@@ -1,14 +1,20 @@
 import torch.nn as nn
-from .metamodules import (MetaModule, MetaSequential, MetaConv2d,
-                          MetaBatchNorm2d, MetaLinear)
-__all__ = ['resnet10', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
-           'resnet152']
+from .metamodules import (
+    MetaModule,
+    MetaSequential,
+    MetaConv2d,
+    MetaBatchNorm2d,
+    MetaLinear,
+)
+
+__all__ = ["resnet10", "resnet18", "resnet34", "resnet50", "resnet101", "resnet152"]
 
 
 def conv3x3(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
-    return MetaConv2d(in_planes, out_planes, kernel_size=3, stride=stride,
-                      padding=1, bias=False)
+    return MetaConv2d(
+        in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False
+    )
 
 
 def conv1x1(in_planes, out_planes, stride=1):
@@ -18,13 +24,13 @@ def conv1x1(in_planes, out_planes, stride=1):
 
 def BasicBlock(inplanes, planes, stride=1, downsample=None):
     block = MetaSequential(
-                    conv3x3(inplanes, planes, stride),
-                    MetaBatchNorm2d(planes),
-                    nn.ReLU(inplace=True),
-                    conv3x3(planes, planes),
-                    MetaBatchNorm2d(planes),
-                    nn.ReLU(inplace=True),
-                            )
+        conv3x3(inplanes, planes, stride),
+        MetaBatchNorm2d(planes),
+        nn.ReLU(inplace=True),
+        conv3x3(planes, planes),
+        MetaBatchNorm2d(planes),
+        nn.ReLU(inplace=True),
+    )
     block.expansion = 1
     return block
 
@@ -35,41 +41,49 @@ class Bottleneck(MetaModule):
     def __init__(self, inplanes, planes, stride=1, downsample=None):
         super(Bottleneck, self).__init__()
         self.bottleneck = MetaSequential(
-                        conv1x1(inplanes, planes),
-                        MetaBatchNorm2d(planes),
-                        nn.ReLU(inplace=True),
-                        conv3x3(planes, planes, stride),
-                        MetaBatchNorm2d(planes),
-                        nn.ReLU(inplace=True),
-                        conv1x1(planes, planes * self.expansion),
-                        MetaBatchNorm2d(planes * self.expansion),
-                        nn.ReLU(inplace=True),
-                    )
+            conv1x1(inplanes, planes),
+            MetaBatchNorm2d(planes),
+            nn.ReLU(inplace=True),
+            conv3x3(planes, planes, stride),
+            MetaBatchNorm2d(planes),
+            nn.ReLU(inplace=True),
+            conv1x1(planes, planes * self.expansion),
+            MetaBatchNorm2d(planes * self.expansion),
+            nn.ReLU(inplace=True),
+        )
 
     def forward(self, x, params=None):
-        return self.bottleneck(x, params=self.get_subdict(params, 'bottleneck'))
+        return self.bottleneck(x, params=self.get_subdict(params, "bottleneck"))
 
 
 class ResNet(MetaModule):
-
-    def __init__(self, block, layers, num_classes=1000, zero_init_residual=False, expansion=1, **kwargs):
+    def __init__(
+        self,
+        block,
+        layers,
+        num_classes=1000,
+        zero_init_residual=False,
+        expansion=1,
+        **kwargs
+    ):
         super(ResNet, self).__init__()
         self.inplanes = 64
 
         self.features = MetaSequential(
-                            MetaConv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False),
-                            MetaBatchNorm2d(64),
-                            nn.ReLU(inplace=True),
-                            self._make_layer(block, 64, layers[0], expansion=expansion),
-                            self._make_layer(block, 128, layers[1], stride=2, expansion=expansion),
-                            self._make_layer(block, 256, layers[2], stride=2, expansion=expansion),
-                            self._make_layer(block, 512, layers[3], stride=2, expansion=expansion),
-                            nn.AdaptiveAvgPool2d((1, 1)))
+            MetaConv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False),
+            MetaBatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            self._make_layer(block, 64, layers[0], expansion=expansion),
+            self._make_layer(block, 128, layers[1], stride=2, expansion=expansion),
+            self._make_layer(block, 256, layers[2], stride=2, expansion=expansion),
+            self._make_layer(block, 512, layers[3], stride=2, expansion=expansion),
+            nn.AdaptiveAvgPool2d((1, 1)),
+        )
         self.classifier = MetaLinear(512 * expansion, num_classes)
 
         for m in self.modules():
             if isinstance(m, MetaConv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
             elif isinstance(m, MetaBatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
@@ -101,51 +115,45 @@ class ResNet(MetaModule):
         return MetaSequential(*layers)
 
     def forward(self, inputs, params=None, features=False):
-        x = self.features(inputs, params=self.get_subdict(params, 'features'))
+        x = self.features(inputs, params=self.get_subdict(params, "features"))
         x = x.view((x.size(0), -1))
         if features:
             return x
-        logits = self.classifier(x, params=self.get_subdict(params, 'classifier'))
+        logits = self.classifier(x, params=self.get_subdict(params, "classifier"))
         return logits
 
 
 def resnet10(**kwargs):
-    """Constructs a ResNet-10 model.
-    """
+    """Constructs a ResNet-10 model."""
     model = ResNet(BasicBlock, [1, 1, 1, 1], expansion=1, **kwargs)
     return model
 
 
 def resnet18(**kwargs):
-    """Constructs a ResNet-18 model.
-    """
+    """Constructs a ResNet-18 model."""
     model = ResNet(BasicBlock, [2, 2, 2, 2], expansion=1, **kwargs)
     return model
 
 
 def resnet34(**kwargs):
-    """Constructs a ResNet-34 model.
-    """
+    """Constructs a ResNet-34 model."""
     model = ResNet(BasicBlock, [3, 4, 6, 3], expansion=1, **kwargs)
     return model
 
 
 def resnet50(**kwargs):
-    """Constructs a ResNet-50 model.
-    """
+    """Constructs a ResNet-50 model."""
     model = ResNet(Bottleneck, [3, 4, 6, 3], expansion=4, **kwargs)
     return model
 
 
 def resnet101(**kwargs):
-    """Constructs a ResNet-101 model.
-    """
+    """Constructs a ResNet-101 model."""
     model = ResNet(Bottleneck, [3, 4, 23, 3], expansion=4, **kwargs)
     return model
 
 
 def resnet152(**kwargs):
-    """Constructs a ResNet-152 model.
-    """
+    """Constructs a ResNet-152 model."""
     model = ResNet(Bottleneck, [3, 8, 36, 3], expansion=4, **kwargs)
     return model

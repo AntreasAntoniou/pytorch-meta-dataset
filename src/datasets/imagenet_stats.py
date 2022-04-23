@@ -22,13 +22,15 @@ from absl import logging
 import numpy as np
 
 
-def log_graph_stats(nodes,
-                    num_images,
-                    get_leaves_fn,
-                    get_spanning_leaves_fn,
-                    graph_name=None,
-                    min_way=5,
-                    max_way=50):
+def log_graph_stats(
+    nodes,
+    num_images,
+    get_leaves_fn,
+    get_spanning_leaves_fn,
+    graph_name=None,
+    min_way=5,
+    max_way=50,
+):
     """Compute and display statistics about the graph defined by nodes.
 
     In particular, the statistics that are computed are:
@@ -50,9 +52,10 @@ def log_graph_stats(nodes,
         max_way: The largest allowable way of an episode.
     """
     logging.info(
-            'Graph statistics%s:',
-            ' of graph {}'.format(graph_name) if graph_name is not None else '')
-    logging.info('Number of nodes: %d', len(nodes))
+        "Graph statistics%s:",
+        " of graph {}".format(graph_name) if graph_name is not None else "",
+    )
+    logging.info("Number of nodes: %d", len(nodes))
     if not nodes:
         # Empty set
         return
@@ -67,10 +70,10 @@ def log_graph_stats(nodes,
     for n in nodes:
         if not n.parents:
             num_roots += 1
-            logging.info('Root: %s', n.words)
-    logging.info('Number of roots: %d', num_roots)
+            logging.info("Root: %s", n.words)
+    logging.info("Number of roots: %d", num_roots)
     leaves = get_leaves_fn(nodes)
-    logging.info('Number of leaves: %d', len(leaves))
+    logging.info("Number of leaves: %d", len(leaves))
 
     # Compute the number of images in the leaves
     num_leaf_images = []
@@ -78,9 +81,12 @@ def log_graph_stats(nodes,
         if n.children:
             continue
         num_leaf_images.append(num_images[n])
-    logging.info('Number of leaf images: min %d, max %d, median %f',
-                 min(num_leaf_images), max(num_leaf_images),
-                 np.median(num_leaf_images))
+    logging.info(
+        "Number of leaf images: min %d, max %d, median %f",
+        min(num_leaf_images),
+        max(num_leaf_images),
+        np.median(num_leaf_images),
+    )
 
     # Compute the average number of children of internal nodes
     num_children = []
@@ -89,9 +95,12 @@ def log_graph_stats(nodes,
             continue
         num_children.append(len(n.children))
     logging.info(
-            'Number of children of internal nodes: min %d, max %d, mean %f median %f',
-            min(num_children), max(num_children), np.mean(num_children),
-            np.median(num_children))
+        "Number of children of internal nodes: min %d, max %d, mean %f median %f",
+        min(num_children),
+        max(num_children),
+        np.mean(num_children),
+        np.median(num_children),
+    )
 
     # Compute the average number of leaves spanned by internal nodes.
     num_span_leaves = []
@@ -100,9 +109,13 @@ def log_graph_stats(nodes,
             continue
         num_span_leaves.append(len(spanning_leaves[n]))
     logging.info(
-            'Number of spanning leaves of internal nodes: min %d, max %d, mean %f '
-            'median %f', min(num_span_leaves), max(num_span_leaves),
-            np.mean(num_span_leaves), np.median(num_span_leaves))
+        "Number of spanning leaves of internal nodes: min %d, max %d, mean %f "
+        "median %f",
+        min(num_span_leaves),
+        max(num_span_leaves),
+        np.mean(num_span_leaves),
+        np.median(num_span_leaves),
+    )
 
     # Log the effects of restricting the allowable 'way' of episodes.
     all_reachable_leaves = set()  # leaves reachable under the restriction.
@@ -113,23 +126,31 @@ def log_graph_stats(nodes,
             possible_ways_in_range.append(way)
             all_reachable_leaves |= set(v)
     logging.info(
-            'When restricting the allowable way to be between %d and %d, '
-            'the achievable ways are: %s', min_way, max_way, possible_ways_in_range)
+        "When restricting the allowable way to be between %d and %d, "
+        "the achievable ways are: %s",
+        min_way,
+        max_way,
+        possible_ways_in_range,
+    )
     logging.info(
-            'So there is a total of %d available internal nodes and a '
-            'total of %d different ways.', len(possible_ways_in_range),
-            len(set(possible_ways_in_range)))
+        "So there is a total of %d available internal nodes and a "
+        "total of %d different ways.",
+        len(possible_ways_in_range),
+        len(set(possible_ways_in_range)),
+    )
     # Are all leaves reachable when using the restricted way?
-    logging.info(' %d / %d are reachable.', len(all_reachable_leaves), len(leaves))
+    logging.info(" %d / %d are reachable.", len(all_reachable_leaves), len(leaves))
 
 
-def log_stats_finegrainedness(nodes,
-                              get_leaves_fn,
-                              get_lowest_common_ancestor_fn,
-                              graph_name=None,
-                              num_per_height_to_print=2,
-                              num_leaf_pairs=10000,
-                              path='longest'):
+def log_stats_finegrainedness(
+    nodes,
+    get_leaves_fn,
+    get_lowest_common_ancestor_fn,
+    graph_name=None,
+    num_per_height_to_print=2,
+    num_leaf_pairs=10000,
+    path="longest",
+):
     """Gather some stats relating to the heights of LCA's of random leaf pairs.
 
     Args:
@@ -150,8 +171,11 @@ def log_stats_finegrainedness(nodes,
         # Empty set
         return
     logging.info(
-            'Finegrainedness analysis of %s graph using %s paths in '
-            'finding the lowest common ancestor.', graph_name, path)
+        "Finegrainedness analysis of %s graph using %s paths in "
+        "finding the lowest common ancestor.",
+        graph_name,
+        path,
+    )
     leaves = get_leaves_fn(nodes)
     # Maps the height of the lowest common ancestor of two leaves to the 'example'
     # in which that height occurred. The example is a tuple of the string words
@@ -178,13 +202,18 @@ def log_stats_finegrainedness(nodes,
         if not lca.parents:
             heights_to_num_lca_root[height] += 1
 
-    name_message = ' of the {} graph'.format(
-            graph_name) if graph_name is not None else ''
-    stats_message = 'mean: {}, median: {}, max: {}, min: {}'.format(
-            np.mean(heights), np.median(heights), max(heights), min(heights))
+    name_message = (
+        " of the {} graph".format(graph_name) if graph_name is not None else ""
+    )
+    stats_message = "mean: {}, median: {}, max: {}, min: {}".format(
+        np.mean(heights), np.median(heights), max(heights), min(heights)
+    )
     logging.info(
-            'Stats on the height of the Lowest Common Ancestor of random leaf pairs%s'
-            ': %s', name_message, stats_message)
+        "Stats on the height of the Lowest Common Ancestor of random leaf pairs%s"
+        ": %s",
+        name_message,
+        stats_message,
+    )
 
     # For each given height, how many pairs of leaves are there?
     heights_to_num_examples = {}
@@ -192,22 +221,30 @@ def log_stats_finegrainedness(nodes,
     for h, examples in heights_to_examples.items():
         heights_to_num_examples[h] = len(examples) / num_leaf_pairs
         heights_to_proportion_root[h] = heights_to_num_lca_root[h] / float(
-                len(examples))
+            len(examples)
+        )
     logging.info(
-            'Proportion of example leaf pairs (out of num_leaf_pairs '
-            'random pairs) for each height of the LCA of the leaves: %s',
-            heights_to_num_examples)
+        "Proportion of example leaf pairs (out of num_leaf_pairs "
+        "random pairs) for each height of the LCA of the leaves: %s",
+        heights_to_num_examples,
+    )
 
     # What proportion of those have the root as LCA, for each possible height?
     logging.info(
-            'Proportion of example leaf pairs per height whose LCA is the root: %s',
-            heights_to_proportion_root)
+        "Proportion of example leaf pairs per height whose LCA is the root: %s",
+        heights_to_proportion_root,
+    )
 
-    logging.info('Examples with different fine-grainedness:\n')
+    logging.info("Examples with different fine-grainedness:\n")
     for height in heights_to_examples.keys():
         # Get representative examples of this height.
         for i, example in enumerate(heights_to_examples[height]):
             if i == num_per_height_to_print:
                 break
-            logging.info('Examples with height %s:\nleafs: %s and %s. LCA: %s',
-                         height, example[0], example[1], example[2])
+            logging.info(
+                "Examples with height %s:\nleafs: %s and %s. LCA: %s",
+                height,
+                example[0],
+                example[1],
+                example[2],
+            )

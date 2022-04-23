@@ -14,7 +14,9 @@ class MetaSequential(nn.Sequential, MetaModule):
             elif isinstance(module, nn.Module):
                 input = module(input)
             else:
-                raise TypeError('The module must be either a torch module '
-                    '(inheriting from `nn.Module`), or a `MetaModule`. '
-                    'Got type: `{0}`'.format(type(module)))
+                raise TypeError(
+                    "The module must be either a torch module "
+                    "(inheriting from `nn.Module`), or a `MetaModule`. "
+                    "Got type: `{0}`".format(type(module))
+                )
         return input

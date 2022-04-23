@@ -15,8 +15,9 @@ def cycle(iterator_fn: typing.Callable) -> typing.Iterable[typing.Any]:
             yield element
 
 
-def sample_iterators(iterators: typing.List[typing.Iterator],
-                     ratios: typing.List[int]) -> typing.Iterable[typing.Any]:
+def sample_iterators(
+    iterators: typing.List[typing.Iterator], ratios: typing.List[int]
+) -> typing.Iterable[typing.Any]:
     """Retrieve info generated from the iterator(s) according to their
     sampling ratios.
 
@@ -42,8 +43,9 @@ def sample_iterators(iterators: typing.List[typing.Iterator],
         yield next(iterators[choice])
 
 
-def shuffle_iterator(iterator: typing.Iterator,
-                     queue_size: int) -> typing.Iterable[typing.Any]:
+def shuffle_iterator(
+    iterator: typing.Iterator, queue_size: int
+) -> typing.Iterable[typing.Any]:
     """Shuffle elements contained in an iterator.
 
     Params:
@@ -67,8 +69,10 @@ def shuffle_iterator(iterator: typing.Iterator,
         for _ in range(queue_size):
             buffer.append(next(iterator))
     except StopIteration:
-        warnings.warn("Number of elements in the iterator is less than the "
-                      f"queue size (N={queue_size}).")
+        warnings.warn(
+            "Number of elements in the iterator is less than the "
+            f"queue size (N={queue_size})."
+        )
     while buffer:
         index = np.random.randint(len(buffer))
         try:

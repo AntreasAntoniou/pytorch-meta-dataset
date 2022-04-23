@@ -3,17 +3,20 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
+# TODO add short tutorial on how to add a new model in this repo
 
 def conv3x3(in_planes, out_planes, stride=1):
-    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=True)
+    return nn.Conv2d(
+        in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=True
+    )
 
 
 def conv_init(m):
     classname = m.__class__.__name__
-    if classname.find('Conv') != -1:
+    if classname.find("Conv") != -1:
         init.xavier_uniform(m.weight, gain=np.sqrt(2))
         init.constant(m.bias, 0)
-    elif classname.find('BatchNorm') != -1:
+    elif classname.find("BatchNorm") != -1:
         init.constant(m.weight, 1)
         init.constant(m.bias, 0)
 
@@ -25,7 +28,9 @@ class wide_basic(nn.Module):
         self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, padding=1, bias=True)
         self.dropout = nn.Dropout(p=dropout_rate)
         self.bn2 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=True)
+        self.conv2 = nn.Conv2d(
+            planes, planes, kernel_size=3, stride=stride, padding=1, bias=True
+        )
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != planes:
@@ -46,7 +51,7 @@ class Wide_ResNet(nn.Module):
         super(Wide_ResNet, self).__init__()
         self.in_planes = 16
 
-        assert ((depth - 4) % 6 == 0), 'Wide-resnet depth should be 6n+4'
+        assert (depth - 4) % 6 == 0, "Wide-resnet depth should be 6n+4"
         n = (depth - 4) // 6
         k = widen_factor
 
@@ -54,16 +59,22 @@ class Wide_ResNet(nn.Module):
         nStages = [16, 16 * k, 32 * k, 64 * k]
 
         self.conv1 = conv3x3(3, nStages[0])
-        self.layer1 = self._wide_layer(wide_basic, nStages[1], n, dropout_rate, stride=1)
-        self.layer2 = self._wide_layer(wide_basic, nStages[2], n, dropout_rate, stride=2)
-        self.layer3 = self._wide_layer(wide_basic, nStages[3], n, dropout_rate, stride=2)
+        self.layer1 = self._wide_layer(
+            wide_basic, nStages[1], n, dropout_rate, stride=1
+        )
+        self.layer2 = self._wide_layer(
+            wide_basic, nStages[2], n, dropout_rate, stride=2
+        )
+        self.layer3 = self._wide_layer(
+            wide_basic, nStages[3], n, dropout_rate, stride=2
+        )
         self.bn1 = nn.BatchNorm2d(nStages[3], momentum=0.9)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         if use_fc:
             self.linear = nn.Linear(nStages[3], num_classes)
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
@@ -94,6 +105,5 @@ class Wide_ResNet(nn.Module):
 
 
 def wideres2810(num_classes, use_fc):
-    """Constructs a wideres-28-10 model without dropout.
-    """
+    """Constructs a wideres-28-10 model without dropout."""
     return Wide_ResNet(28, 10, 0, num_classes, use_fc)

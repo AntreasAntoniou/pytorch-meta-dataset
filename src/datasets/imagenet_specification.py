@@ -39,6 +39,7 @@ FLAGS = tf.flags.FLAGS
 
 class Synset(object):
     """A Synset object."""
+
     def __init__(self, wn_id, words, children, parents):
         """Initialize a Synset.
 
@@ -188,7 +189,7 @@ def get_synsets_from_ids(wn_ids, synsets):
             requested_synsets[s.wn_id] = s
 
     found = set(requested_synsets.keys())
-    assert found == wn_ids, ('Did not find synsets for ids: {}.'.format(wn_ids - found))
+    assert found == wn_ids, "Did not find synsets for ids: {}.".format(wn_ids - found)
     return requested_synsets
 
 
@@ -271,7 +272,7 @@ def create_sampling_graph(synsets, root=None):
     if root is not None:
         # Remove from the ancestors nodes that aren't the root or descendents of it.
         nodes_to_remove = [
-                n for n in nodes if not (root == n or is_descendent(n, root))
+            n for n in nodes if not (root == n or is_descendent(n, root))
         ]
         nodes = nodes - set(nodes_to_remove)
 
@@ -286,10 +287,12 @@ def create_sampling_graph(synsets, root=None):
     return nodes
 
 
-def propose_valid_test_roots(spanning_leaves,
-                             margin=50,
-                             desired_num_valid_classes=150,
-                             desired_num_test_classes=150):
+def propose_valid_test_roots(
+    spanning_leaves,
+    margin=50,
+    desired_num_valid_classes=150,
+    desired_num_test_classes=150,
+):
     """Propose roots for the validation and test sub-graphs.
 
     This is done as follows: each subgraph root will be the Synset that spans the
@@ -345,11 +348,16 @@ def propose_valid_test_roots(spanning_leaves,
             test_candidates.append(s)
 
     if not valid_candidates or not test_candidates:
-        raise RuntimeError('Found no root candidates. Try a different margin.')
+        raise RuntimeError("Found no root candidates. Try a different margin.")
 
     # For displaying the list of candidates
     for cand in valid_candidates:
-        logger.info('Candidate %s, %s with %d spanning leaves', cand.words, cand.wn_id, len(spanning_leaves[cand]))
+        logger.info(
+            "Candidate %s, %s with %d spanning leaves",
+            cand.words,
+            cand.wn_id,
+            len(spanning_leaves[cand]),
+        )
 
     # Propose the first possible candidate for each of validation and test
     valid_root = valid_candidates[0]
@@ -359,10 +367,10 @@ def propose_valid_test_roots(spanning_leaves,
     while test_root == valid_root:
         test_candidate_ind += 1
         if test_candidate_ind == len(test_candidates):
-            raise RuntimeError('No candidates for test root. Try a different margin.')
+            raise RuntimeError("No candidates for test root. Try a different margin.")
         test_root = test_candidates[test_candidate_ind]
 
-    return {'valid': valid_root, 'test': test_root}
+    return {"valid": valid_root, "test": test_root}
 
 
 def get_class_splits(spanning_leaves, valid_test_roots=None, **kwargs):
@@ -396,13 +404,13 @@ def get_class_splits(spanning_leaves, valid_test_roots=None, **kwargs):
         ValueError: when the provided valid_test_roots are invalid.
     """
     if valid_test_roots is not None:
-        if valid_test_roots['valid'] is None or valid_test_roots['test'] is None:
-            raise ValueError('A root cannot be None.')
+        if valid_test_roots["valid"] is None or valid_test_roots["test"] is None:
+            raise ValueError("A root cannot be None.")
 
     if valid_test_roots is None:
         valid_test_roots = propose_valid_test_roots(spanning_leaves, **kwargs)
 
-    valid_root, test_root = valid_test_roots['valid'], valid_test_roots['test']
+    valid_root, test_root = valid_test_roots["valid"], valid_test_roots["test"]
 
     # The WordNet id's of the validation and test classes
     valid_wn_ids = set([s.wn_id for s in spanning_leaves[valid_root]])
@@ -414,7 +422,7 @@ def get_class_splits(spanning_leaves, valid_test_roots=None, **kwargs):
     # assigning each overlapping leaf to either validation or test classes
     # (roughly equally).
     overlap = [s for s in valid_wn_ids if s in test_wn_ids]
-    logger.info('Size of overlap: %d leaves', len(overlap))
+    logger.info("Size of overlap: %d leaves", len(overlap))
     assign_to_valid = True
     for s in overlap:
         if assign_to_valid:
@@ -425,17 +433,15 @@ def get_class_splits(spanning_leaves, valid_test_roots=None, **kwargs):
 
     # Training classes are all the remaining ones that are not already assigned
     leaves = get_leaves(spanning_leaves.keys())
-    train_wn_ids = set([
+    train_wn_ids = set(
+        [
             s.wn_id
             for s in leaves
             if s.wn_id not in valid_wn_ids and s.wn_id not in test_wn_ids
-    ])
+        ]
+    )
 
-    split_classes = {
-            'train': train_wn_ids,
-            'valid': valid_wn_ids,
-            'test': test_wn_ids
-    }
+    split_classes = {"train": train_wn_ids, "valid": valid_wn_ids, "test": test_wn_ids}
     return split_classes, valid_test_roots
 
 
@@ -469,12 +475,12 @@ def init_split_subgraphs(class_splits, spanning_leaves, valid_test_roots):
             the root of both valid and test.
     """
     # Get the wn_id's of the train, valid and test classes.
-    train_wn_ids = class_splits['train']
-    valid_wn_ids = class_splits['valid']
-    test_wn_ids = class_splits['test']
+    train_wn_ids = class_splits["train"]
+    valid_wn_ids = class_splits["valid"]
+    test_wn_ids = class_splits["test"]
 
-    valid_root_wn_id = valid_test_roots['valid'].wn_id
-    test_root_wn_id = valid_test_roots['test'].wn_id
+    valid_root_wn_id = valid_test_roots["valid"].wn_id
+    test_root_wn_id = valid_test_roots["test"].wn_id
 
     # Get 3 full copies of the graph that will be modified downstream.
     graph_copy_train, _ = copy_graph(spanning_leaves.keys())
@@ -486,11 +492,11 @@ def init_split_subgraphs(class_splits, spanning_leaves, valid_test_roots):
     valid_classes = set([s for s in graph_copy_valid if s.wn_id in valid_wn_ids])
     test_classes = set([s for s in graph_copy_test if s.wn_id in test_wn_ids])
     split_leaves = {
-            'train': train_classes,
-            'valid': valid_classes,
-            'test': test_classes
+        "train": train_classes,
+        "valid": valid_classes,
+        "test": test_classes,
     }
-    split_roots = {'valid': valid_root, 'test': test_root}
+    split_roots = {"valid": valid_root, "test": test_root}
     return split_leaves, split_roots
 
 
@@ -571,21 +577,24 @@ def create_splits(spanning_leaves, split_enum, valid_test_roots=None, **kwargs):
     """
     # The classes (leaf Synsets of the overall graph) of each split.
     split_classes, valid_test_roots = get_class_splits(
-            spanning_leaves, valid_test_roots=valid_test_roots, **kwargs)
+        spanning_leaves, valid_test_roots=valid_test_roots, **kwargs
+    )
 
     # The copies of the leaf and desired root Synsets for each split. Copies are
     # needed since in each sub-graph those nodes will have different children /
     # parent lists.
-    leaves, roots = init_split_subgraphs(split_classes, spanning_leaves, valid_test_roots)
+    leaves, roots = init_split_subgraphs(
+        split_classes, spanning_leaves, valid_test_roots
+    )
 
     # Create the split sub-graphs as described above.
-    train_graph = create_sampling_graph(leaves['train'])
-    valid_graph = create_sampling_graph(leaves['valid'], root=roots['valid'])
-    test_graph = create_sampling_graph(leaves['test'], root=roots['test'])
+    train_graph = create_sampling_graph(leaves["train"])
+    valid_graph = create_sampling_graph(leaves["valid"], root=roots["valid"])
+    test_graph = create_sampling_graph(leaves["test"], root=roots["test"])
     split_graphs = {
-            split_enum.TRAIN: train_graph,
-            split_enum.VALID: valid_graph,
-            split_enum.TEST: test_graph
+        split_enum.TRAIN: train_graph,
+        split_enum.VALID: valid_graph,
+        split_enum.TEST: test_graph,
     }
     return split_graphs, roots
 
@@ -688,8 +697,11 @@ def find_lowest_common_in_paths(path_a, path_b):
             heights.append(height)
 
     if not heights:
-        raise ValueError('No common nodes in given paths {} and {}.'.format(
-                [n.words for n in path_a], [n.words for n in path_b]))
+        raise ValueError(
+            "No common nodes in given paths {} and {}.".format(
+                [n.words for n in path_a], [n.words for n in path_b]
+            )
+        )
 
     # Find the lowest common element.
     # There may be multiple common ancestors that share the same minimal height.
@@ -697,12 +709,13 @@ def find_lowest_common_in_paths(path_a, path_b):
     min_height = min(heights)
     argmin_height = heights.index(min_height)
     lowest_common = common_elements[argmin_height]
-    assert min_height > 0, ('The lowest common ancestor between two distinct '
-                            'leaves cannot be a leaf.')
+    assert min_height > 0, (
+        "The lowest common ancestor between two distinct " "leaves cannot be a leaf."
+    )
     return lowest_common, min_height
 
 
-def get_lowest_common_ancestor(leaf_a, leaf_b, path='longest'):
+def get_lowest_common_ancestor(leaf_a, leaf_b, path="longest"):
     """Finds the lowest common ancestor of two leaves and its height.
 
     The height of a node here is defined as the maximum distance between that node
@@ -727,7 +740,7 @@ def get_lowest_common_ancestor(leaf_a, leaf_b, path='longest'):
     Raises:
         ValueError: Invalid path. Must be 'longest', or 'all'.
     """
-    if path not in ['longest', 'all']:
+    if path not in ["longest", "all"]:
         raise ValueError('Invalid path. Must be "longest", or "all".')
 
     # A list of paths from a each leaf to the root.
@@ -737,7 +750,7 @@ def get_lowest_common_ancestor(leaf_a, leaf_b, path='longest'):
     # Each element in paths_a is a path starting from leaf_a and ending at the
     # root (and analogously for paths_b). We pick the longest path of each list of
     # paths and find the lowest common ancestor between those two paths.
-    if path == 'longest':
+    if path == "longest":
         path_a = paths_a[np.argmax([len(path_a) for path_a in paths_a])]
         path_b = paths_b[np.argmax([len(path_b) for path_b in paths_b])]
         lca, height_of_lca = find_lowest_common_in_paths(path_a, path_b)
@@ -778,30 +791,30 @@ def get_num_synset_2012_images(path, synsets_2012, files_to_skip=None):
         images.
     """
     if path:
-        logger.info('Attempting to read number of leaf images from %s...', path)
+        logger.info("Attempting to read number of leaf images from %s...", path)
         if os.path.exists(path):
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 num_synset_2012_images = json.load(f)
-                logger.info('Successful.')
+                logger.info("Successful.")
                 return num_synset_2012_images
 
-    logger.info('Unsuccessful. Deriving number of leaf images...')
+    logger.info("Unsuccessful. Deriving number of leaf images...")
     if files_to_skip is None:
         files_to_skip = set()
     num_synset_2012_images = {}
     for s_2012 in synsets_2012:
         synset_dir = os.path.join(FLAGS.ilsvrc_2012_data_root, s_2012.wn_id)
         all_files = set(os.listdir(synset_dir))
-        img_files = set([f for f in all_files if f.lower().endswith('jpeg')])
+        img_files = set([f for f in all_files if f.lower().endswith("jpeg")])
         final_files = img_files - files_to_skip
         skipped_files = all_files - final_files
         if skipped_files:
-            logger.info('Synset: %s, files_skipped: %s', s_2012.wn_id, skipped_files)
+            logger.info("Synset: %s, files_skipped: %s", s_2012.wn_id, skipped_files)
         # Size of the set difference (-) between listed files and `files_to_skip`.
         num_synset_2012_images[s_2012.wn_id] = len(final_files)
 
     if path:
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(num_synset_2012_images, f, indent=2)
 
     return num_synset_2012_images
@@ -830,21 +843,22 @@ def export_graph(nodes):
     wn_ids_to_synsets = {synset.wn_id: synset for synset in nodes}
     wn_ids = set(wn_ids_to_synsets.keys())
     if len(wn_ids) != len(nodes):
-        raise ValueError('Duplicate WordNet IDs in the same graph')
+        raise ValueError("Duplicate WordNet IDs in the same graph")
     # Iterate in lexicographic order over the WordNet IDs
     for wn_id in sorted(wn_ids):
         synset = wn_ids_to_synsets[wn_id]
         children_ids = {child.wn_id for child in synset.children}
         if not children_ids.issubset(wn_ids):
-            raise ValueError('Synset has children outside of the graph')
+            raise ValueError("Synset has children outside of the graph")
         parents_ids = {parent.wn_id for parent in synset.parents}
         if not parents_ids.issubset(wn_ids):
-            raise ValueError('Synset has parents outside of the graph')
+            raise ValueError("Synset has parents outside of the graph")
         node_repr = dict(
-                wn_id=wn_id,
-                words=synset.words,
-                children_ids=sorted(children_ids),
-                parents_ids=sorted(parents_ids))
+            wn_id=wn_id,
+            words=synset.words,
+            children_ids=sorted(children_ids),
+            parents_ids=sorted(parents_ids),
+        )
         node_representations.append(node_repr)
     return node_representations
 
@@ -866,31 +880,35 @@ def import_graph(node_representations):
     # `children` and `parents` are initialized with empty sets.
     wn_id_to_node = dict()
     for node_repr in node_representations:
-        wn_id = node_repr['wn_id']
-        words = node_repr['words']
+        wn_id = node_repr["wn_id"]
+        words = node_repr["words"]
         if wn_id in wn_id_to_node:
-            raise ValueError('Duplicate Word ID (%s, %s) in the imported graph.' % (wn_id, words))
+            raise ValueError(
+                "Duplicate Word ID (%s, %s) in the imported graph." % (wn_id, words)
+            )
         node = Synset(wn_id=wn_id, words=words, children=set(), parents=set())
         wn_id_to_node[wn_id] = node
 
     # Fill in the `children` and `parents` with the Synset objects.
     for node_repr in node_representations:
-        wn_id = node_repr['wn_id']
+        wn_id = node_repr["wn_id"]
         node = wn_id_to_node[wn_id]
-        children_ids = node_repr['children_ids']
+        children_ids = node_repr["children_ids"]
         node.children.update(wn_id_to_node[child_id] for child_id in children_ids)
-        parents_ids = node_repr['parents_ids']
+        parents_ids = node_repr["parents_ids"]
         node.parents.update(wn_id_to_node[parent_id] for parent_id in parents_ids)
         graph.add(node)
 
     return graph
 
 
-def create_imagenet_specification(split_enum,
-                                  files_to_skip,
-                                  path_to_num_leaf_images=None,
-                                  train_split_only=False,
-                                  log_stats=True):
+def create_imagenet_specification(
+    split_enum,
+    files_to_skip,
+    path_to_num_leaf_images=None,
+    train_split_only=False,
+    log_stats=True,
+):
     """Creates the dataset specification of ImageNet.
 
     This amounts to creating a data structure, a DAG specifically, whose nodes are
@@ -933,32 +951,32 @@ def create_imagenet_specification(split_enum,
     # Create Synsets for all ImageNet synsets (82115 in total).
     data_root = FLAGS.ilsvrc_2012_data_root
     synsets = {}
-    path_to_words = os.path.join(data_root, 'words.txt')
+    path_to_words = os.path.join(data_root, "words.txt")
     with open(path_to_words) as f:
         for line in f:
-            wn_id, words = line.rstrip().split('\t')
+            wn_id, words = line.rstrip().split("\t")
             synsets[wn_id] = Synset(wn_id, words, set(), set())
 
     # Populate the parents / children arrays of these Synsets.
-    path_to_is_a = os.path.join(data_root, 'wordnet.is_a.txt')
-    with open(path_to_is_a, 'r') as f:
+    path_to_is_a = os.path.join(data_root, "wordnet.is_a.txt")
+    with open(path_to_is_a, "r") as f:
         for line in f:
-            parent, child = line.rstrip().split(' ')
+            parent, child = line.rstrip().split(" ")
             synsets[parent].children.add(synsets[child])
             synsets[child].parents.add(synsets[parent])
 
     # Get the WordNet id's of the synsets of ILSVRC 2012.
     wn_ids_2012 = os.listdir(data_root)
     wn_ids_2012 = set(
-            entry for entry in wn_ids_2012
-            if os.path.isdir(os.path.join(data_root, entry)))
+        entry for entry in wn_ids_2012 if os.path.isdir(os.path.join(data_root, entry))
+    )
     synsets_2012 = [s for s in synsets.values() if s.wn_id in wn_ids_2012]
     assert len(wn_ids_2012) == len(synsets_2012)
 
     # Get a dict mapping each WordNet id of ILSVRC 2012 to its number of images.
-    num_synset_2012_images = get_num_synset_2012_images(path_to_num_leaf_images,
-                                                        synsets_2012,
-                                                        files_to_skip)
+    num_synset_2012_images = get_num_synset_2012_images(
+        path_to_num_leaf_images, synsets_2012, files_to_skip
+    )
 
     # Get the graph of all and only the ancestors of the ILSVRC 2012 classes.
     sampling_graph = create_sampling_graph(synsets_2012)
@@ -974,73 +992,89 @@ def create_imagenet_specification(split_enum,
         # We are keeping all graph for training.
         valid_test_roots = None
         splits = {
-                split_enum.TRAIN: spanning_leaves,
-                split_enum.VALID: set(),
-                split_enum.TEST: set()
+            split_enum.TRAIN: spanning_leaves,
+            split_enum.VALID: set(),
+            split_enum.TEST: set(),
         }
     else:
         # Create class splits, each with its own sampling graph.
         # Choose roots for the validation and test subtrees (see the docstring of
         # create_splits for more information on how these are used).
         valid_test_roots = {
-                'valid': get_synset_by_wnid('n02075296', sampling_graph),  # 'carnivore'
-                'test': get_synset_by_wnid('n03183080', sampling_graph)  # 'device'
+            "valid": get_synset_by_wnid("n02075296", sampling_graph),  # 'carnivore'
+            "test": get_synset_by_wnid("n03183080", sampling_graph),  # 'device'
         }
         # The valid_test_roots returned here correspond to the same Synsets as in
         # the above dict, but are the copied versions of them for each subgraph.
         splits, valid_test_roots = create_splits(
-                spanning_leaves, split_enum, valid_test_roots=valid_test_roots)
+            spanning_leaves, split_enum, valid_test_roots=valid_test_roots
+        )
 
     # Compute num_images for each split.
     split_num_images = {}
     split_num_images[split_enum.TRAIN] = get_num_spanning_images(
-            get_spanning_leaves(splits[split_enum.TRAIN]), num_synset_2012_images)
+        get_spanning_leaves(splits[split_enum.TRAIN]), num_synset_2012_images
+    )
     split_num_images[split_enum.VALID] = get_num_spanning_images(
-            get_spanning_leaves(splits[split_enum.VALID]), num_synset_2012_images)
+        get_spanning_leaves(splits[split_enum.VALID]), num_synset_2012_images
+    )
     split_num_images[split_enum.TEST] = get_num_spanning_images(
-            get_spanning_leaves(splits[split_enum.TEST]), num_synset_2012_images)
+        get_spanning_leaves(splits[split_enum.TEST]), num_synset_2012_images
+    )
 
     # Compute statistics.
     if log_stats:
         imagenet_stats.log_graph_stats(
-                sampling_graph,
-                num_images,
-                get_leaves,
-                get_spanning_leaves,
-                graph_name='all')
+            sampling_graph,
+            num_images,
+            get_leaves,
+            get_spanning_leaves,
+            graph_name="all",
+        )
         imagenet_stats.log_graph_stats(
-                splits[split_enum.TRAIN],
-                split_num_images[split_enum.TRAIN],
-                get_leaves,
-                get_spanning_leaves,
-                graph_name='train')
+            splits[split_enum.TRAIN],
+            split_num_images[split_enum.TRAIN],
+            get_leaves,
+            get_spanning_leaves,
+            graph_name="train",
+        )
         imagenet_stats.log_graph_stats(
-                splits[split_enum.VALID],
-                split_num_images[split_enum.VALID],
-                get_leaves,
-                get_spanning_leaves,
-                graph_name='valid')
+            splits[split_enum.VALID],
+            split_num_images[split_enum.VALID],
+            get_leaves,
+            get_spanning_leaves,
+            graph_name="valid",
+        )
         imagenet_stats.log_graph_stats(
-                splits[split_enum.TEST],
-                split_num_images[split_enum.TEST],
-                get_leaves,
-                get_spanning_leaves,
-                graph_name='test')
+            splits[split_enum.TEST],
+            split_num_images[split_enum.TEST],
+            get_leaves,
+            get_spanning_leaves,
+            graph_name="test",
+        )
         # Stats relevant to analysis of fine-graindness.
         imagenet_stats.log_stats_finegrainedness(
-                splits[split_enum.TRAIN],
-                get_leaves,
-                get_lowest_common_ancestor,
-                graph_name='train',
-                path='longest')
+            splits[split_enum.TRAIN],
+            get_leaves,
+            get_lowest_common_ancestor,
+            graph_name="train",
+            path="longest",
+        )
         imagenet_stats.log_stats_finegrainedness(
-                splits[split_enum.TEST],
-                get_leaves,
-                get_lowest_common_ancestor,
-                graph_name='test',
-                path='longest')
+            splits[split_enum.TEST],
+            get_leaves,
+            get_lowest_common_ancestor,
+            graph_name="test",
+            path="longest",
+        )
 
     # Note that spanning_leaves and num_images can easily be created from
     # sampling_graph if required.
-    return (splits, split_num_images, sampling_graph, synsets_2012,
-            num_synset_2012_images, valid_test_roots)
+    return (
+        splits,
+        split_num_images,
+        sampling_graph,
+        synsets_2012,
+        num_synset_2012_images,
+        valid_test_roots,
+    )

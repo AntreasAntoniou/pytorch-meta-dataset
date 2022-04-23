@@ -4,15 +4,13 @@ import torch
 from torch import Tensor
 
 
-def ECE_(soft_preds: Tensor,
-         targets: Tensor,
-         reduc_dims: List[int]) -> Tensor:
-    '''
+def ECE_(soft_preds: Tensor, targets: Tensor, reduc_dims: List[int]) -> Tensor:
+    """
     args:
 
     soft_preds: tensor of shape [*, K]
     targets: tensor of shape [*,]
-    '''
+    """
     device = soft_preds.device
 
     highest_prob, hard_preds = soft_preds.max(-1)
@@ -30,14 +28,13 @@ def ECE_(soft_preds: Tensor,
     return ECE
 
 
-def vectorized_binning(probs: Tensor,
-                       bins: Tensor) -> Tensor:
-    '''
+def vectorized_binning(probs: Tensor, bins: Tensor) -> Tensor:
+    """
     args:
 
     probs: tensor of shape [*,]
     bins: tensor of shape [M]
-    '''
+    """
     batch_shape = probs.shape
     new_bin_shape = [1 for _ in range(len(batch_shape))]
     new_bin_shape.append(-1)
@@ -46,7 +43,9 @@ def vectorized_binning(probs: Tensor,
     probs = probs.unsqueeze(-1)  # [*, 1]
     bins_indexes = (probs >= bins).long().sum(-1, keepdim=True)  # [*,]
 
-    ones_hot_indexes = torch.zeros(batch_shape + bins.shape[-1:]).to(probs.device)  # [*,]
-    ones_hot_indexes.scatter_(-1, bins_indexes, 1.)  #
+    ones_hot_indexes = torch.zeros(batch_shape + bins.shape[-1:]).to(
+        probs.device
+    )  # [*,]
+    ones_hot_indexes.scatter_(-1, bins_indexes, 1.0)  #
 
     return ones_hot_indexes
