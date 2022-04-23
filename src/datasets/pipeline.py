@@ -21,13 +21,15 @@ from .dataset_spec import HierarchicalDatasetSpecification as HDS
 
 
 class EpisodicDataset(torch.utils.data.IterableDataset):
-    def __init__(self,
-                 class_datasets: List[TFRecordDataset],
-                 sampler: EpisodeDescriptionSampler,
-                 support_transforms: torchvision.transforms,
-                 query_transforms: torchvision.transforms,
-                 max_support_size: int,
-                 max_query_size: int):
+    def __init__(
+        self,
+        class_datasets: List[TFRecordDataset],
+        sampler: EpisodeDescriptionSampler,
+        support_transforms: torchvision.transforms,
+        query_transforms: torchvision.transforms,
+        max_support_size: int,
+        max_query_size: int,
+    ):
         super().__init__()
 
         self.class_datasets = class_datasets
@@ -45,7 +47,9 @@ class EpisodicDataset(torch.utils.data.IterableDataset):
             query_images = []
             query_labels = []
 
-            episode_description = self.sampler.sample_episode_description(self.random_gen)
+            episode_description = self.sampler.sample_episode_description(
+                self.random_gen
+            )
             episode_classes = list({class_ for class_, _, _ in episode_description})
 
             for class_id, nb_support, nb_query in episode_description:
@@ -56,21 +60,25 @@ class EpisodicDataset(torch.utils.data.IterableDataset):
                 while sup_added < nb_support:
                     sample_dic = self.get_next(class_id)
 
-                    if sample_dic['id'] not in used_ids:
+                    if sample_dic["id"] not in used_ids:
                         sample_dic = parse_record(sample_dic)
-                        used_ids.append(sample_dic['id'])
+                        used_ids.append(sample_dic["id"])
 
-                        support_images.append(self.support_transforms(sample_dic['image']).unsqueeze(0))
+                        support_images.append(
+                            self.support_transforms(sample_dic["image"]).unsqueeze(0)
+                        )
                         sup_added += 1
 
                 while query_added < nb_query:
                     sample_dic = self.get_next(class_id)
 
-                    if sample_dic['id'] not in used_ids:
+                    if sample_dic["id"] not in used_ids:
                         sample_dic = parse_record(sample_dic)
 
-                        used_ids.append(sample_dic['id'])
-                        query_images.append(self.query_transforms(sample_dic['image']).unsqueeze(0))
+                        used_ids.append(sample_dic["id"])
+                        query_images.append(
+                            self.query_transforms(sample_dic["image"]).unsqueeze(0)
+                        )
 
                         query_added += 1
 
@@ -95,9 +103,9 @@ class EpisodicDataset(torch.utils.data.IterableDataset):
 
 
 class BatchDataset(torch.utils.data.IterableDataset):
-    def __init__(self,
-                 class_datasets: List[TFRecordDataset],
-                 transforms: torchvision.transforms):
+    def __init__(
+        self, class_datasets: List[TFRecordDataset], transforms: torchvision.transforms
+    ):
         super().__init__()
 
         self.class_datasets = class_datasets
@@ -109,8 +117,8 @@ class BatchDataset(torch.utils.data.IterableDataset):
             rand_class = self.random_gen.randint(len(self.class_datasets))
             sample_dic = self.get_next(rand_class)
             sample_dic = parse_record(sample_dic)
-            transformed_image = self.transforms(sample_dic['image'])
-            target = sample_dic['label'][0]
+            transformed_image = self.transforms(sample_dic["image"])
+            target = sample_dic["label"][0]
             yield transformed_image, target
 
     def get_next(self, class_id):
@@ -124,8 +132,7 @@ class BatchDataset(torch.utils.data.IterableDataset):
 
 
 class ZipDataset(torch.utils.data.IterableDataset):
-    def __init__(self,
-                 dataset_list: Union[List[EpisodicDataset], List[BatchDataset]]):
+    def __init__(self, dataset_list: Union[List[EpisodicDataset], List[BatchDataset]]):
         self.dataset_list = dataset_list
         self.random_gen = np.random.RandomState()
 
@@ -189,12 +196,14 @@ def contains_duplicates(X):
     return len(np.unique(X)) != len(X)
 
 
-def make_episode_pipeline(dataset_spec: Union[HDS, BDS, DS],
-                          split: Split,
-                          episode_descr_config: EpisodeDescriptionConfig,
-                          data_config: DataConfig,
-                          ignore_hierarchy_probability: float = 0.0,
-                          **kwargs) -> Dataset:
+def make_episode_pipeline(
+    dataset_spec: Union[HDS, BDS, DS],
+    split: Split,
+    episode_descr_config: EpisodeDescriptionConfig,
+    data_config: DataConfig,
+    ignore_hierarchy_probability: float = 0.0,
+    **kwargs
+) -> Dataset:
     """Returns a pipeline emitting data from potentially multiples source as Episodes.
 
     Args:
@@ -211,10 +220,12 @@ def make_episode_pipeline(dataset_spec: Union[HDS, BDS, DS],
 
     episodic_dataset_list = []
     offset = 0
-    episode_reader = reader.Reader(dataset_spec=dataset_spec,
-                                   split=split,
-                                   shuffle=data_config.shuffle,
-                                   offset=offset)
+    episode_reader = reader.Reader(
+        dataset_spec=dataset_spec,
+        split=split,
+        shuffle=data_config.shuffle,
+        offset=offset,
+    )
 
     class_datasets = episode_reader.construct_class_datasets()
     sampler = sampling.EpisodeDescriptionSampler(
@@ -223,27 +234,33 @@ def make_episode_pipeline(dataset_spec: Union[HDS, BDS, DS],
         episode_descr_config=episode_descr_config,
         use_dag_hierarchy=episode_descr_config.use_dag_ontology,
         use_bilevel_hierarchy=episode_descr_config.use_bilevel_ontology,
-        ignore_hierarchy_probability=ignore_hierarchy_probability)
+        ignore_hierarchy_probability=ignore_hierarchy_probability,
+    )
 
     support_transforms = get_transforms(data_config, split)
-    query_transforms = get_transforms(data_config, Split["TEST"])  # query sets are neither jittered or gaussian noised: https://github.com/google-research/meta-dataset/blob/main/meta_dataset/learn/gin/setups/data_config.gin
+    query_transforms = get_transforms(
+        data_config, Split["TEST"]
+    )  # query sets are neither jittered or gaussian noised: https://github.com/google-research/meta-dataset/blob/main/meta_dataset/learn/gin/setups/data_config.gin
 
     _, max_support_size, max_query_size = sampler.compute_chunk_sizes()
-    episodic_dataset_list.append(EpisodicDataset(class_datasets=class_datasets,
-                                                 sampler=sampler,
-                                                 max_support_size=max_support_size,
-                                                 max_query_size=max_query_size,
-                                                 support_transforms=support_transforms,
-                                                 query_transforms=query_transforms))
+    episodic_dataset_list.append(
+        EpisodicDataset(
+            class_datasets=class_datasets,
+            sampler=sampler,
+            max_support_size=max_support_size,
+            max_query_size=max_query_size,
+            support_transforms=support_transforms,
+            query_transforms=query_transforms,
+        )
+    )
     offset += len(class_datasets)
 
     return ZipDataset(episodic_dataset_list)
 
 
-def make_batch_pipeline(dataset_spec: Union[HDS, BDS, DS],
-                        data_config: DataConfig,
-                        split: Split,
-                        **kwargs) -> Dataset:
+def make_batch_pipeline(
+    dataset_spec: Union[HDS, BDS, DS], data_config: DataConfig, split: Split, **kwargs
+) -> Dataset:
     """Returns a pipeline emitting data from potentially multiples source as batches.
 
     Args:
@@ -254,16 +271,17 @@ def make_batch_pipeline(dataset_spec: Union[HDS, BDS, DS],
 
     offset = 0
     dataset_list: List[BatchDataset] = []
-    batch_reader = reader.Reader(dataset_spec=dataset_spec,
-                                 split=split,
-                                 shuffle=data_config.shuffle,
-                                 offset=offset)
+    batch_reader = reader.Reader(
+        dataset_spec=dataset_spec,
+        split=split,
+        shuffle=data_config.shuffle,
+        offset=offset,
+    )
 
     class_datasets = batch_reader.construct_class_datasets()
 
     transforms = get_transforms(data_config=data_config, split=split)
-    dataset = BatchDataset(class_datasets=class_datasets,
-                           transforms=transforms)
+    dataset = BatchDataset(class_datasets=class_datasets, transforms=transforms)
     dataset_list.append(dataset)
 
     return ZipDataset(dataset_list)

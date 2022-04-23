@@ -7,8 +7,7 @@ import torch.distributed as dist
 from torch import Tensor
 
 
-def compute_centroids(z_s: Tensor,
-                      y_s: Tensor):
+def compute_centroids(z_s: Tensor, y_s: Tensor):
     """
     inputs:
         z_s : torch.Tensor of size [*, s_shot, d]
@@ -16,7 +15,9 @@ def compute_centroids(z_s: Tensor,
     updates :
         centroids : torch.Tensor of size [*, num_class, d]
     """
-    one_hot = get_one_hot(y_s, num_classes=y_s.unique().size(0)).transpose(-2, -1)  # [*, K, s_shot]
+    one_hot = get_one_hot(y_s, num_classes=y_s.unique().size(0)).transpose(
+        -2, -1
+    )  # [*, K, s_shot]
     centroids = one_hot.matmul(z_s) / one_hot.sum(-1, keepdim=True)  # [*, K, d]
 
     return centroids
@@ -24,10 +25,10 @@ def compute_centroids(z_s: Tensor,
 
 def get_one_hot(y_s: Tensor, num_classes: int):
     """
-        args:
-            y_s : torch.Tensor of shape [*]
-        returns
-            one_hot : torch.Tensor of shape [*, num_classes]
+    args:
+        y_s : torch.Tensor of shape [*]
+    returns
+        one_hot : torch.Tensor of shape [*, num_classes]
     """
     one_hot_size = list(y_s.size()) + [num_classes]
     one_hot = torch.zeros(one_hot_size, device=y_s.device)
@@ -36,10 +37,7 @@ def get_one_hot(y_s: Tensor, num_classes: int):
     return one_hot
 
 
-def extract_features(bs: int,
-                     support: Tensor,
-                     query: Tensor,
-                     model: nn.Module):
+def extract_features(bs: int, support: Tensor, query: Tensor, model: nn.Module):
     """
     Extract features from support and query set using the provided model
         args:
@@ -51,7 +49,7 @@ def extract_features(bs: int,
     # Extract support and query features
     n_tasks, shots_s, C, H, W = support.size()
     shots_q = query.size(1)
-    device = 'cpu' if not torch.cuda.is_available() else dist.get_rank()
+    device = "cpu" if not torch.cuda.is_available() else dist.get_rank()
 
     if bs > 0:
         if n_tasks > 1:
@@ -69,10 +67,9 @@ def extract_features(bs: int,
     return feat_s, feat_q
 
 
-def batch_feature_extract(model: nn.Module,
-                          t: Tensor,
-                          bs: int,
-                          device: torch.device) -> Tensor:
+def batch_feature_extract(
+    model: nn.Module, t: Tensor, bs: int, device: torch.device
+) -> Tensor:
     shots: int
     n_tasks, shots, C, H, W = t.size()
 

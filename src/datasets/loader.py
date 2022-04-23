@@ -16,12 +16,10 @@ from . import pipeline as torch_pipeline
 from . import dataset_spec as dataset_spec_lib
 
 
-DL = Union[DataLoader,
-           Iterable[Tuple[Tensor, ...]]]
+DL = Union[DataLoader, Iterable[Tuple[Tensor, ...]]]
 
 
-def get_dataspecs(args: argparse.Namespace,
-                  source: str) -> Tuple[Any, Any, Any]:
+def get_dataspecs(args: argparse.Namespace, source: str) -> Tuple[Any, Any, Any]:
     # Recovering data
     data_config = config_lib.DataConfig(args=args)
     episod_config = config_lib.EpisodeDescriptionConfig(args=args)
@@ -30,10 +28,10 @@ def get_dataspecs(args: argparse.Namespace,
     use_dag_ontology = False
 
     # Enable ontology aware sampling for Omniglot and ImageNet.
-    if source == 'omniglot':
+    if source == "omniglot":
         # use_bilevel_ontology_list[sources.index('omniglot')] = True
         use_bilevel_ontology = True
-    if source in ['ilsvrc_2012', 'ilsvrc_2012_v2']:
+    if source in ["ilsvrc_2012", "ilsvrc_2012_v2"]:
         use_dag_ontology = True
 
     episod_config.use_bilevel_ontology = use_bilevel_ontology
@@ -46,42 +44,59 @@ def get_dataspecs(args: argparse.Namespace,
     return dataset_spec, data_config, episod_config
 
 
-def get_dataloader(args: argparse.Namespace,
-                   source: str,
-                   batch_size: int,
-                   split: Split,
-                   world_size: int,
-                   version: str,
-                   episodic: bool):
+def get_dataloader(
+    args: argparse.Namespace,
+    source: str,
+    batch_size: int,
+    split: Split,
+    world_size: int,
+    version: str,
+    episodic: bool,
+):
     dataset_spec, data_config, episod_config = get_dataspecs(args, source)
     num_classes = len(dataset_spec.get_classes(split=split))
 
     pipeline_fn: Callable[..., Dataset]
     data_loader: DL
-    if version == 'pytorch':
-        pipeline_fn = cast(Callable[..., Dataset], (torch_pipeline.make_episode_pipeline if episodic
-                                                    else torch_pipeline.make_batch_pipeline))
-        dataset: Dataset = pipeline_fn(dataset_spec=dataset_spec,
-                                       data_config=data_config,
-                                       split=split,
-                                       episode_descr_config=episod_config)
+    if version == "pytorch":
+        pipeline_fn = cast(
+            Callable[..., Dataset],
+            (
+                torch_pipeline.make_episode_pipeline
+                if episodic
+                else torch_pipeline.make_batch_pipeline
+            ),
+        )
+        dataset: Dataset = pipeline_fn(
+            dataset_spec=dataset_spec,
+            data_config=data_config,
+            split=split,
+            episode_descr_config=episod_config,
+        )
 
         worker_init_fn = partial(worker_init_fn_, seed=args.seed)
-        data_loader = DataLoader(dataset=dataset,
-                                 batch_size=int(batch_size / world_size),
-                                 num_workers=data_config.num_workers,
-                                 worker_init_fn=worker_init_fn)
-    elif version == 'tf':
+        data_loader = DataLoader(
+            dataset=dataset,
+            batch_size=int(batch_size / world_size),
+            num_workers=data_config.num_workers,
+            worker_init_fn=worker_init_fn,
+        )
+    elif version == "tf":
         import gin
         import tensorflow as tf
         from .original_meta_dataset.data import pipeline as tf_pipeline
 
         tf.compat.v1.disable_eager_execution()
         tf_pipeline_fn: Callable[..., Any]
-        tf_pipeline_fn = (tf_pipeline.make_one_source_episode_pipeline if episodic
-                          else tf_pipeline.make_one_source_batch_pipeline)
+        tf_pipeline_fn = (
+            tf_pipeline.make_one_source_episode_pipeline
+            if episodic
+            else tf_pipeline.make_one_source_batch_pipeline
+        )
 
-        GIN_FILE_PATH = 'src/datasets/original_meta_dataset/learn/gin/setups/data_config.gin'
+        GIN_FILE_PATH = (
+            "src/datasets/original_meta_dataset/learn/gin/setups/data_config.gin"
+        )
         gin.parse_config_file(GIN_FILE_PATH)
 
         tf_dataset: Any = tf_pipeline_fn(
@@ -92,7 +107,8 @@ def get_dataloader(args: argparse.Namespace,
             split=split,
             batch_size=int(batch_size / world_size),
             image_size=84,
-            shuffle_buffer_size=300)
+            shuffle_buffer_size=300,
+        )
 
         iterator: Iterable = tf_dataset.make_one_shot_iterator().get_next()
 
@@ -103,8 +119,10 @@ def get_dataloader(args: argparse.Namespace,
 
         data_loader = infinite_loader(session, iterator, episodic, mean, std)
     else:
-        raise ValueError(f"Wrong loader version, got {version}, \
-                           expected to be in ['pytorch', 'tf']")
+        raise ValueError(
+            f"Wrong loader version, got {version}, \
+                           expected to be in ['pytorch', 'tf']"
+        )
 
     return data_loader, num_classes
 
@@ -121,15 +139,17 @@ def to_torch_labels(a: np.ndarray) -> Tensor:
     return torch.from_numpy(a).long()
 
 
-def infinite_loader(session: Any, iterator: Iterable, episodic: bool,
-                    mean: Tensor, std: Tensor) -> Iterable[Tuple[Tensor, ...]]:
+def infinite_loader(
+    session: Any, iterator: Iterable, episodic: bool, mean: Tensor, std: Tensor
+) -> Iterable[Tuple[Tensor, ...]]:
     while True:
         (e, source_id) = session.run(iterator)
         if episodic:
-            yield (to_torch_imgs(e[0], mean, std).unsqueeze(0),
-                   to_torch_imgs(e[3], mean, std).unsqueeze(0),
-                   to_torch_labels(e[1]).unsqueeze(0),
-                   to_torch_labels(e[4]).unsqueeze(0))
+            yield (
+                to_torch_imgs(e[0], mean, std).unsqueeze(0),
+                to_torch_imgs(e[3], mean, std).unsqueeze(0),
+                to_torch_labels(e[1]).unsqueeze(0),
+                to_torch_labels(e[4]).unsqueeze(0),
+            )
         else:
-            yield (to_torch_imgs(e[0], mean, std),
-                   to_torch_labels(e[1]))
+            yield (to_torch_imgs(e[0], mean, std), to_torch_labels(e[1]))

@@ -12,12 +12,13 @@ from . import example_pb2
 from . import iterator_utils
 
 
-def tfrecord_iterator(data_path: str,
-                      random_gen: np.random.RandomState,
-                      index_path: typing.Optional[str] = None,
-                      shard: typing.Optional[typing.Tuple[int, int]] = None,
-                      shuffle: bool = False,
-                      ) -> typing.Iterable[memoryview]:
+def tfrecord_iterator(
+    data_path: str,
+    random_gen: np.random.RandomState,
+    index_path: typing.Optional[str] = None,
+    shard: typing.Optional[typing.Tuple[int, int]] = None,
+    shuffle: bool = False,
+) -> typing.Iterable[memoryview]:
     """Create an iterator over the tfrecord dataset.
 
     Since the tfrecords file stores each example as bytes, we can
@@ -49,8 +50,10 @@ def tfrecord_iterator(data_path: str,
     crc_bytes = bytearray(4)
     datum_bytes = bytearray(1024 * 1024)
 
-    def random_reader(indexes: np.ndarray,
-                      random_gen: np.random.RandomState,):
+    def random_reader(
+        indexes: np.ndarray,
+        random_gen: np.random.RandomState,
+    ):
         random_permutation = random_gen.permutation(range(indexes.shape[0]))
         for i in random_permutation:
             start = indexes[i, 0]
@@ -69,7 +72,7 @@ def tfrecord_iterator(data_path: str,
                 raise RuntimeError("Failed to read the record size.")
             if file.readinto(crc_bytes) != 4:
                 raise RuntimeError("Failed to read the start token.")
-            length, = struct.unpack("<Q", length_bytes)
+            (length,) = struct.unpack("<Q", length_bytes)
             if length > len(datum_bytes):
                 datum_bytes = datum_bytes.zfill(int(length * 1.5))
             datum_bytes_view = memoryview(datum_bytes)[:length]
@@ -104,10 +107,9 @@ def tfrecord_iterator(data_path: str,
     file.close()
 
 
-def process_feature(feature: example_pb2.Feature,
-                    typename: str,
-                    typename_mapping: dict,
-                    key: str):
+def process_feature(
+    feature: example_pb2.Feature, typename: str, typename_mapping: dict, key: str
+):
     # NOTE: We assume that each key in the example has only one field
     # (either "bytes_list", "float_list", or "int64_list")!
     field = feature.ListFields()[0]
@@ -117,8 +119,10 @@ def process_feature(feature: example_pb2.Feature,
         tf_typename = typename_mapping[typename]
         if tf_typename != inferred_typename:
             reversed_mapping = {v: k for k, v in typename_mapping.items()}
-            raise TypeError(f"Incompatible type '{typename}' for `{key}` "
-                        f"(should be '{reversed_mapping[inferred_typename]}').")
+            raise TypeError(
+                f"Incompatible type '{typename}' for `{key}` "
+                f"(should be '{reversed_mapping[inferred_typename]}')."
+            )
 
     if inferred_typename == "bytes_list":
         value = np.frombuffer(value[0], dtype=np.uint8)
@@ -135,19 +139,26 @@ def extract_feature_dict(features, description, typename_mapping):
 
         def get_value(typename, typename_mapping, key):
             feature = features[key].feature
-            fn = functools.partial(process_feature, typename=typename,
-                                   typename_mapping=typename_mapping, key=key)
+            fn = functools.partial(
+                process_feature,
+                typename=typename,
+                typename_mapping=typename_mapping,
+                key=key,
+            )
             return list(map(fn, feature))
+
     elif isinstance(features, example_pb2.Features):
         features = features.feature
 
         def get_value(typename, typename_mapping, key):
-            return process_feature(features[key], typename,
-                                   typename_mapping, key)
+            return process_feature(features[key], typename, typename_mapping, key)
+
     else:
-        raise TypeError(f"Incompatible type: features should be either of type "
-                        f"example_pb2.Features or example_pb2.FeatureLists and "
-                        f"not {type(features)}")
+        raise TypeError(
+            f"Incompatible type: features should be either of type "
+            f"example_pb2.Features or example_pb2.FeatureLists and "
+            f"not {type(features)}"
+        )
 
     all_keys = list(features.keys())
 
@@ -166,13 +177,14 @@ def extract_feature_dict(features, description, typename_mapping):
     return processed_features
 
 
-def example_loader(data_path: str,
-                   random_gen: np.random.RandomState,
-                   index_path: typing.Union[str, None],
-                   description: typing.Union[typing.List[str], typing.Dict[str, str], None] = None,
-                   shard: typing.Optional[typing.Tuple[int, int]] = None,
-                   shuffle: bool = False,
-                   ) -> typing.Iterable[typing.Dict[str, np.ndarray]]:
+def example_loader(
+    data_path: str,
+    random_gen: np.random.RandomState,
+    index_path: typing.Union[str, None],
+    description: typing.Union[typing.List[str], typing.Dict[str, str], None] = None,
+    shard: typing.Optional[typing.Tuple[int, int]] = None,
+    shuffle: bool = False,
+) -> typing.Iterable[typing.Dict[str, np.ndarray]]:
     """Create an iterator over the (decoded) examples contained within
     the dataset.
 
@@ -210,27 +222,39 @@ def example_loader(data_path: str,
     typename_mapping = {
         "byte": "bytes_list",
         "float": "float_list",
-        "int": "int64_list"
+        "int": "int64_list",
     }
 
-    record_iterator = tfrecord_iterator(data_path, random_gen, index_path, shard, shuffle)
+    record_iterator = tfrecord_iterator(
+        data_path, random_gen, index_path, shard, shuffle
+    )
 
     for record, (start, end) in record_iterator:
         # yield record
         example = example_pb2.Example()
         example.ParseFromString(record)
-        feature_dic = extract_feature_dict(example.features, description, typename_mapping)
-        feature_dic['id'] = start
+        feature_dic = extract_feature_dict(
+            example.features, description, typename_mapping
+        )
+        feature_dic["id"] = start
         yield feature_dic
 
 
-def sequence_loader(data_path: str,
-                    index_path: typing.Union[str, None],
-                    context_description: typing.Union[typing.List[str], typing.Dict[str, str], None] = None,
-                    features_description: typing.Union[typing.List[str], typing.Dict[str, str], None] = None,
-                    shard: typing.Optional[typing.Tuple[int, int]] = None,
-                    ) -> typing.Iterable[typing.Tuple[typing.Dict[str, np.ndarray],
-                                                      typing.Dict[str, typing.List[np.ndarray]]]]:
+def sequence_loader(
+    data_path: str,
+    index_path: typing.Union[str, None],
+    context_description: typing.Union[
+        typing.List[str], typing.Dict[str, str], None
+    ] = None,
+    features_description: typing.Union[
+        typing.List[str], typing.Dict[str, str], None
+    ] = None,
+    shard: typing.Optional[typing.Tuple[int, int]] = None,
+) -> typing.Iterable[
+    typing.Tuple[
+        typing.Dict[str, np.ndarray], typing.Dict[str, typing.List[np.ndarray]]
+    ]
+]:
     """Create an iterator over the (decoded) sequence examples contained within
     the dataset.
 
@@ -277,7 +301,7 @@ def sequence_loader(data_path: str,
     typename_mapping = {
         "byte": "bytes_list",
         "float": "float_list",
-        "int": "int64_list"
+        "int": "int64_list",
     }
 
     record_iterator = tfrecord_iterator(data_path, index_path, shard)
@@ -286,22 +310,34 @@ def sequence_loader(data_path: str,
         example = example_pb2.SequenceExample()
         example.ParseFromString(record)
 
-        context = extract_feature_dict(example.context, context_description, typename_mapping)
-        features = extract_feature_dict(example.feature_lists, features_description, typename_mapping)
+        context = extract_feature_dict(
+            example.context, context_description, typename_mapping
+        )
+        features = extract_feature_dict(
+            example.feature_lists, features_description, typename_mapping
+        )
 
         yield context, features
 
 
-def tfrecord_loader(data_path: str,
-                    index_path: typing.Union[str, None],
-                    random_gen: np.random.RandomState,
-                    description: typing.Union[typing.List[str], typing.Dict[str, str], None] = None,
-                    shard: typing.Optional[typing.Tuple[int, int]] = None,
-                    shuffle: bool = False,
-                    sequence_description: typing.Union[typing.List[str], typing.Dict[str, str], None] = None,
-                    ) -> typing.Iterable[typing.Union[typing.Dict[str, np.ndarray],
-                                                      typing.Tuple[typing.Dict[str, np.ndarray],
-                                                                   typing.Dict[str, typing.List[np.ndarray]]]]]:
+def tfrecord_loader(
+    data_path: str,
+    index_path: typing.Union[str, None],
+    random_gen: np.random.RandomState,
+    description: typing.Union[typing.List[str], typing.Dict[str, str], None] = None,
+    shard: typing.Optional[typing.Tuple[int, int]] = None,
+    shuffle: bool = False,
+    sequence_description: typing.Union[
+        typing.List[str], typing.Dict[str, str], None
+    ] = None,
+) -> typing.Iterable[
+    typing.Union[
+        typing.Dict[str, np.ndarray],
+        typing.Tuple[
+            typing.Dict[str, np.ndarray], typing.Dict[str, typing.List[np.ndarray]]
+        ],
+    ]
+]:
     """Create an iterator over the (decoded) examples contained within
     the dataset.
 
@@ -346,18 +382,30 @@ def tfrecord_loader(data_path: str,
         instance of a `SequenceExample`.
     """
     if sequence_description is not None:
-        return sequence_loader(data_path, index_path, description, sequence_description, shard)
-    return example_loader(data_path, random_gen, index_path, description, shard, shuffle)
+        return sequence_loader(
+            data_path, index_path, description, sequence_description, shard
+        )
+    return example_loader(
+        data_path, random_gen, index_path, description, shard, shuffle
+    )
 
 
-def multi_tfrecord_loader(data_pattern: str,
-                          index_pattern: typing.Union[str, None],
-                          splits: typing.Dict[str, float],
-                          description: typing.Union[typing.List[str], typing.Dict[str, str], None] = None,
-                          sequence_description: typing.Union[typing.List[str], typing.Dict[str, str], None] = None,
-                          ) -> typing.Iterable[typing.Union[typing.Dict[str, np.ndarray],
-                                                            typing.Tuple[typing.Dict[str, np.ndarray],
-                                                                         typing.Dict[str, typing.List[np.ndarray]]]]]:
+def multi_tfrecord_loader(
+    data_pattern: str,
+    index_pattern: typing.Union[str, None],
+    splits: typing.Dict[str, float],
+    description: typing.Union[typing.List[str], typing.Dict[str, str], None] = None,
+    sequence_description: typing.Union[
+        typing.List[str], typing.Dict[str, str], None
+    ] = None,
+) -> typing.Iterable[
+    typing.Union[
+        typing.Dict[str, np.ndarray],
+        typing.Tuple[
+            typing.Dict[str, np.ndarray], typing.Dict[str, typing.List[np.ndarray]]
+        ],
+    ]
+]:
     """Create an iterator by reading and merging multiple tfrecord datasets.
 
     NOTE: Sharding is currently unavailable for the multi tfrecord loader.
@@ -395,11 +443,16 @@ def multi_tfrecord_loader(data_pattern: str,
     it: iterator
         A repeating iterator that generates batches of data.
     """
-    loaders = [functools.partial(tfrecord_loader, data_path=data_pattern.format(split),
-                                 index_path=index_pattern.format(split) \
-                                     if index_pattern is not None else None,
-                                 description=description,
-                                 sequence_description=sequence_description,
-                                 )
-               for split in splits.keys()]
+    loaders = [
+        functools.partial(
+            tfrecord_loader,
+            data_path=data_pattern.format(split),
+            index_path=index_pattern.format(split)
+            if index_pattern is not None
+            else None,
+            description=description,
+            sequence_description=sequence_description,
+        )
+        for split in splits.keys()
+    ]
     return iterator_utils.sample_iterators(loaders, list(splits.values()))

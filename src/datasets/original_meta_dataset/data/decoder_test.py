@@ -27,72 +27,76 @@ import tensorflow.compat.v1 as tf
 
 
 class DecoderTest(tf.test.TestCase):
+    def test_string_decoder(self):
+        # Make random image.
+        image_size = 32
+        image = np.random.randint(
+            low=0, high=255, size=[image_size, image_size, 3]
+        ).astype(np.ubyte)
 
-  def test_string_decoder(self):
-    # Make random image.
-    image_size = 32
-    image = np.random.randint(
-        low=0, high=255, size=[image_size, image_size, 3]).astype(np.ubyte)
+        # Encode
+        image_bytes = dataset_to_records.encode_image(image, image_format="PNG")
+        label = np.zeros(1).astype(np.int64)
+        image_example = dataset_to_records.make_example(
+            [("image", "bytes", [image_bytes]), ("label", "int64", [label])]
+        )
 
-    # Encode
-    image_bytes = dataset_to_records.encode_image(image, image_format='PNG')
-    label = np.zeros(1).astype(np.int64)
-    image_example = dataset_to_records.make_example([
-        ('image', 'bytes', [image_bytes]), ('label', 'int64', [label])
-    ])
+        # Decode
+        string_decoder = decoder.StringDecoder()
+        image_string = string_decoder(image_example)
+        decoded_image = tf.image.decode_image(image_string)
+        # Assert perfect reconstruction.
+        with self.session(use_gpu=False) as sess:
+            image_decoded = sess.run(decoded_image)
+        self.assertAllClose(image, image_decoded)
 
-    # Decode
-    string_decoder = decoder.StringDecoder()
-    image_string = string_decoder(image_example)
-    decoded_image = tf.image.decode_image(image_string)
-    # Assert perfect reconstruction.
-    with self.session(use_gpu=False) as sess:
-      image_decoded = sess.run(decoded_image)
-    self.assertAllClose(image, image_decoded)
+    def test_image_decoder(self):
+        # Make random image.
+        image_size = 84
+        image = np.random.randint(
+            low=0, high=255, size=[image_size, image_size, 3]
+        ).astype(np.ubyte)
 
-  def test_image_decoder(self):
-    # Make random image.
-    image_size = 84
-    image = np.random.randint(
-        low=0, high=255, size=[image_size, image_size, 3]).astype(np.ubyte)
+        # Encode
+        image_bytes = dataset_to_records.encode_image(image, image_format="PNG")
+        label = np.zeros(1).astype(np.int64)
+        image_example = dataset_to_records.make_example(
+            [("image", "bytes", [image_bytes]), ("label", "int64", [label])]
+        )
 
-    # Encode
-    image_bytes = dataset_to_records.encode_image(image, image_format='PNG')
-    label = np.zeros(1).astype(np.int64)
-    image_example = dataset_to_records.make_example([
-        ('image', 'bytes', [image_bytes]), ('label', 'int64', [label])
-    ])
+        # Decode
+        image_decoder = decoder.ImageDecoder(image_size=image_size)
+        image_decoded = image_decoder(image_example)
+        # Assert perfect reconstruction.
+        with self.session(use_gpu=False) as sess:
+            image_rec_numpy = sess.run(image_decoded)
+        self.assertAllClose(
+            2 * (image.astype(np.float32) / 255.0 - 0.5), image_rec_numpy
+        )
 
-    # Decode
-    image_decoder = decoder.ImageDecoder(image_size=image_size)
-    image_decoded = image_decoder(image_example)
-    # Assert perfect reconstruction.
-    with self.session(use_gpu=False) as sess:
-      image_rec_numpy = sess.run(image_decoded)
-    self.assertAllClose(2 * (image.astype(np.float32) / 255.0 - 0.5),
-                        image_rec_numpy)
+    def test_feature_decoder(self):
+        # Make random feature.
+        feat_size = 64
+        feat = np.random.randn(feat_size).astype(np.float32)
+        label = np.zeros(1).astype(np.int64)
 
-  def test_feature_decoder(self):
-    # Make random feature.
-    feat_size = 64
-    feat = np.random.randn(feat_size).astype(np.float32)
-    label = np.zeros(1).astype(np.int64)
+        # Encode
+        feat_example = dataset_to_records.make_example(
+            [
+                ("image/embedding", "float32", feat),
+                ("image/class/label", "int64", [label]),
+            ]
+        )
 
-    # Encode
-    feat_example = dataset_to_records.make_example([
-        ('image/embedding', 'float32', feat),
-        ('image/class/label', 'int64', [label]),
-    ])
+        # Decode
+        feat_decoder = decoder.FeatureDecoder(feat_len=feat_size)
+        feat_decoded = feat_decoder(feat_example)
 
-    # Decode
-    feat_decoder = decoder.FeatureDecoder(feat_len=feat_size)
-    feat_decoded = feat_decoder(feat_example)
-
-    # Assert perfect reconstruction.
-    with self.session(use_gpu=False) as sess:
-      feat_rec_numpy = sess.run(feat_decoded)
-    self.assertAllEqual(feat_rec_numpy, feat)
+        # Assert perfect reconstruction.
+        with self.session(use_gpu=False) as sess:
+            feat_rec_numpy = sess.run(feat_decoded)
+        self.assertAllEqual(feat_rec_numpy, feat)
 
 
-if __name__ == '__main__':
-  tf.test.main()
+if __name__ == "__main__":
+    tf.test.main()

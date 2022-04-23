@@ -19,22 +19,20 @@ from matplotlib.axes import Axes
 from mpl_toolkits.axes_grid1 import ImageGrid
 from loguru import logger
 import torch.nn as nn
-plt.style.use('ggplot')
+
+plt.style.use("ggplot")
 
 
-def plot_metrics(metrics: dict,
-                 path: str,
-                 iteration: int,
-                 args: argparse.Namespace) -> None:
-    plt.rc('font',
-           size=16)
+def plot_metrics(
+    metrics: dict, path: str, iteration: int, args: argparse.Namespace
+) -> None:
+    plt.rc("font", size=16)
 
     n_cols = min(2, len(metrics))
     n_rows = (len(metrics) - 1) // n_cols + 1
-    _, axs = plt.subplots(nrows=n_rows,
-                          ncols=n_cols,
-                          figsize=(6 * n_cols, 5 * n_rows),
-                          squeeze=False)
+    _, axs = plt.subplots(
+        nrows=n_rows, ncols=n_cols, figsize=(6 * n_cols, 5 * n_rows), squeeze=False
+    )
 
     for j, (metric_name, metric) in enumerate(metrics.items()):
         ax = axs[j // n_cols, j % n_cols]
@@ -44,25 +42,37 @@ def plot_metrics(metrics: dict,
     plt.savefig(path, dpi=300)
 
 
-def make_episode_visualization(args: argparse.Namespace,
-                               img_s: np.ndarray,
-                               img_q: np.ndarray,
-                               gt_s: np.ndarray,
-                               gt_q: np.ndarray,
-                               preds: np.ndarray,
-                               save_path: str,
-                               mean: List[float] = [0.485, 0.456, 0.406],
-                               std: List[float] = [0.229, 0.224, 0.225]):
+def make_episode_visualization(
+    args: argparse.Namespace,
+    img_s: np.ndarray,
+    img_q: np.ndarray,
+    gt_s: np.ndarray,
+    gt_q: np.ndarray,
+    preds: np.ndarray,
+    save_path: str,
+    mean: List[float] = [0.485, 0.456, 0.406],
+    std: List[float] = [0.229, 0.224, 0.225],
+):
     max_support = args.max_s_visu
     max_query = args.max_q_visu
     max_classes = args.max_class_visu
 
     # 0) Preliminary checks
-    assert len(img_s.shape) == 4, f"Support shape expected : Ks x 3 x H x W or Ks x H x W x 3. Currently: {img_s.shape}"
-    assert len(img_q.shape) == 4, f"Query shape expected : Kq x 3 x H x W or Kq x H x W x 3. Currently: {img_q.shape}"
-    assert len(preds.shape) == 2, f"Predictions shape expected : Kq x num_classes. Currently: {preds.shape}"
-    assert len(gt_s.shape) == 1, f"Support GT shape expected : Ks. Currently: {gt_s.shape}"
-    assert len(gt_q.shape) == 1, f"Query GT shape expected : Kq. Currently: {gt_q.shape}"
+    assert (
+        len(img_s.shape) == 4
+    ), f"Support shape expected : Ks x 3 x H x W or Ks x H x W x 3. Currently: {img_s.shape}"
+    assert (
+        len(img_q.shape) == 4
+    ), f"Query shape expected : Kq x 3 x H x W or Kq x H x W x 3. Currently: {img_q.shape}"
+    assert (
+        len(preds.shape) == 2
+    ), f"Predictions shape expected : Kq x num_classes. Currently: {preds.shape}"
+    assert (
+        len(gt_s.shape) == 1
+    ), f"Support GT shape expected : Ks. Currently: {gt_s.shape}"
+    assert (
+        len(gt_q.shape) == 1
+    ), f"Query GT shape expected : Kq. Currently: {gt_q.shape}"
 
     # assert img_s.shape[-1] == img_q.shape[-1] == 3, "Images need to be in the format H x W x 3"
     if img_s.shape[1] == 3:
@@ -70,17 +80,23 @@ def make_episode_visualization(args: argparse.Namespace,
     if img_q.shape[1] == 3:
         img_q = np.transpose(img_q, (0, 2, 3, 1))
 
-    assert img_s.shape[-3:-1] == img_q.shape[-3:-1], f"Support's resolution is {img_s.shape[-3:-1]} \
+    assert (
+        img_s.shape[-3:-1] == img_q.shape[-3:-1]
+    ), f"Support's resolution is {img_s.shape[-3:-1]} \
                                                       Query's resolution is {img_q.shape[-3:-1]}"
 
     if img_s.min() < 0:
-        logger.info(f"Support images between {img_s.min()} and {img_s.max()} -> Renormalizing")
+        logger.info(
+            f"Support images between {img_s.min()} and {img_s.max()} -> Renormalizing"
+        )
         img_s *= std
         img_s += mean
         logger.info(f"Post normalization : {img_s.min()} and {img_s.max()}")
 
     if img_q.min() < 0:
-        logger.info(f"Query images between {img_q.min()} and {img_q.max()} -> Renormalizing")
+        logger.info(
+            f"Query images between {img_q.min()} and {img_q.max()} -> Renormalizing"
+        )
         img_q *= std
         img_q += mean
         logger.info(f"Post normalization : {img_q.min()} and {img_q.max()}")
@@ -105,11 +121,13 @@ def make_episode_visualization(args: argparse.Namespace,
     assert n_columns > 0
 
     fig = plt.figure(figsize=(4 * n_columns, 4 * n_rows), dpi=100)
-    grid = ImageGrid(fig, 111,
-                     nrows_ncols=(n_rows, n_columns),
-                     axes_pad=(0.4, 0.4),
-                     direction='row',
-                     )
+    grid = ImageGrid(
+        fig,
+        111,
+        nrows_ncols=(n_rows, n_columns),
+        axes_pad=(0.4, 0.4),
+        direction="row",
+    )
 
     # 1) visualize the support set
     handles = []
@@ -123,9 +141,9 @@ def make_episode_visualization(args: argparse.Namespace,
                 # assert img.min() >= 0. and img.max() <= 1.0, (img.min(), img.max())
                 make_plot(ax, img)
 
-            ax.axis('off')
+            ax.axis("off")
             if i == 0:
-                ax.set_title(f'Class {j+1}', size=20)
+                ax.set_title(f"Class {j+1}", size=20)
 
             handles += ax.get_legend_handles_labels()[0]
             labels += ax.get_legend_handles_labels()[1]
@@ -141,23 +159,27 @@ def make_episode_visualization(args: argparse.Namespace,
 
                 make_plot(ax, img, preds_q[j][i - max_s], j, n_columns)
 
-            ax.axis('off')
+            ax.axis("off")
             handles += ax.get_legend_handles_labels()[0]
             labels += ax.get_legend_handles_labels()[1]
 
     acc = (np.argmax(preds, axis=1) == gt_q).mean()
-    fig.suptitle(f'Method={args.method}   /    Episode Accuracy={acc:.2f}',
-                 size=32,
-                 weight='bold',
-                 y=0.97)
+    fig.suptitle(
+        f"Method={args.method}   /    Episode Accuracy={acc:.2f}",
+        size=32,
+        weight="bold",
+        y=0.97,
+    )
     by_label = dict(zip(labels, handles))
 
-    fig.legend(by_label.values(),
-               by_label.keys(),
-               bbox_to_anchor=(0.5, 0.05),
-               loc='center',
-               ncol=3,
-               prop={'size': 30})
+    fig.legend(
+        by_label.values(),
+        by_label.keys(),
+        bbox_to_anchor=(0.5, 0.05),
+        loc="center",
+        ncol=3,
+        prop={"size": 30},
+    )
 
     fig.savefig(save_path)
     fig.clf()
@@ -174,39 +196,44 @@ def frame_image(img: np.ndarray, color: list, frame_width: int = 3) -> np.ndarra
     return framed_img
 
 
-def make_plot(ax: Axes,
-              img: np.ndarray,
-              preds: np.ndarray = None,
-              label: int = None,
-              n_columns: int = 0) -> None:
+def make_plot(
+    ax: Axes,
+    img: np.ndarray,
+    preds: np.ndarray = None,
+    label: int = None,
+    n_columns: int = 0,
+) -> None:
 
     if preds is not None:
         assert label is not None
         assert n_columns > 0
 
-        titles: List[str] = ['{:.2f}'.format(p) for p in preds]
+        titles: List[str] = ["{:.2f}".format(p) for p in preds]
 
         pred_class: int = int(np.argmax(preds))
-        titles[pred_class] = r'$\mathbf{{{}}}$'.format(titles[pred_class])
+        titles[pred_class] = r"$\mathbf{{{}}}$".format(titles[pred_class])
         titles = titles[:n_columns]
 
-        title: str = '/'.join(titles)
+        title: str = "/".join(titles)
         # ax.set_title(title, size=12)
 
         well_classified: bool = int(np.argmax(preds)) == label
         color = [0, 0.8, 0] if well_classified else [0.9, 0, 0]
         img = frame_image(img, color)
-        ax.plot(0,
-                0,
-                "-",
-                c=color,
-                label='{} Queries'.format('Well classified' if well_classified
-                                          else 'Misclassified'),
-                linewidth=4)
+        ax.plot(
+            0,
+            0,
+            "-",
+            c=color,
+            label="{} Queries".format(
+                "Well classified" if well_classified else "Misclassified"
+            ),
+            linewidth=4,
+        )
     else:  # Support images
-        color = [0., 0., 0.]
+        color = [0.0, 0.0, 0.0]
         img = frame_image(img, color)
-        ax.plot(0, 0, "-", c=color, label='Support', linewidth=4)
+        ax.plot(0, 0, "-", c=color, label="Support", linewidth=4)
 
     ax.imshow(img)
 
@@ -218,14 +245,12 @@ def main_process(args) -> bool:
     return True
 
 
-def setup(port: int,
-          rank: int,
-          world_size: int) -> None:
+def setup(port: int, rank: int, world_size: int) -> None:
     """
     Used for distributed learning
     """
-    environ['MASTER_ADDR'] = 'localhost'
-    environ['MASTER_PORT'] = str(port)
+    environ["MASTER_ADDR"] = "localhost"
+    environ["MASTER_PORT"] = str(port)
 
     # initialize the process group
     dist.init_process_group("nccl", rank=rank, world_size=world_size)
@@ -254,10 +279,10 @@ def find_free_port() -> int:
 
 def get_one_hot(y_s: Tensor, num_classes: int) -> Tensor:
     """
-        args:
-            y_s : torch.Tensor of shape [n_task, shot]
-        returns
-            y_s : torch.Tensor of shape [n_task, shot, num_classes]
+    args:
+        y_s : torch.Tensor of shape [n_task, shot]
+    returns
+        y_s : torch.Tensor of shape [n_task, shot, num_classes]
     """
     one_hot_size = list(y_s.size()) + [num_classes]
     one_hot = torch.zeros(one_hot_size, device=y_s.device)
@@ -266,12 +291,11 @@ def get_one_hot(y_s: Tensor, num_classes: int) -> Tensor:
     return one_hot
 
 
-def rand_bbox(size: torch.Size,
-              lam: float):
+def rand_bbox(size: torch.Size, lam: float):
     W = size[2]
     H = size[3]
 
-    cut_rat = np.sqrt(1. - lam)
+    cut_rat = np.sqrt(1.0 - lam)
     cut_w = int(W * cut_rat)
     cut_h = int(H * cut_rat)
 
@@ -289,22 +313,24 @@ def rand_bbox(size: torch.Size,
 
 def get_model_dir(args: argparse.Namespace) -> Path:
 
-    model_type = args.method if args.episodic_training else 'standard'
-    path = Path(args.ckpt_path,
-                f'base={args.base_source}',
-                f'val={args.val_source}',
-                f'arch={args.arch}',
-                f'method={model_type}')
+    model_type = args.method if args.episodic_training else "standard"
+    path = Path(
+        args.ckpt_path,
+        f"base={args.base_source}",
+        f"val={args.val_source}",
+        f"arch={args.arch}",
+        f"method={model_type}",
+    )
     return path
 
 
 def get_logs_path(model_path: Path, method: str, shot: int) -> Path:
-    exp_path: str = '_'.join(str(model_path).split('/')[1:])
+    exp_path: str = "_".join(str(model_path).split("/")[1:])
 
-    file_path: Path = Path('tmp') / exp_path / method
+    file_path: Path = Path("tmp") / exp_path / method
     file_path.mkdir(parents=True, exist_ok=True)
 
-    return file_path / f'{shot}.txt'
+    return file_path / f"{shot}.txt"
 
 
 def get_features(model, samples):
@@ -332,58 +358,62 @@ class AverageMeter(object):
 
 
 def save_pickle(file: Union[Path, str], data: Any) -> None:
-    with open(file, 'wb') as f:
+    with open(file, "wb") as f:
         pickle.dump(data, f)
 
 
 def load_pickle(file: Union[Path, str]) -> Any:
-    with open(file, 'rb') as f:
+    with open(file, "rb") as f:
         return pickle.load(f)
 
 
-def save_checkpoint(state: Any,
-                    is_best: bool,
-                    filename: str = 'checkpoint.pth.tar',
-                    folder: Path = None) -> None:
+def save_checkpoint(
+    state: Any, is_best: bool, filename: str = "checkpoint.pth.tar", folder: Path = None
+) -> None:
     if not folder:
-        folder = Path('result/default')
+        folder = Path("result/default")
     folder.mkdir(parents=False, exist_ok=True)
 
     torch.save(state, folder / filename)
 
     if is_best:
-        shutil.copyfile(folder / filename, folder / 'model_best.pth.tar')
+        shutil.copyfile(folder / filename, folder / "model_best.pth.tar")
 
 
 def load_checkpoint(model: nn.Module, model_path: Path) -> None:
     checkpoint = torch.load(model_path)
-    state_dict = checkpoint['state_dict']
+    state_dict = checkpoint["state_dict"]
     names = []
     for k, v in state_dict.items():
         names.append(k)
-    missing_keys, unexpected_keys = model.load_state_dict(
-                                        state_dict, strict=False)
-    logger.info(f'Loaded model from {model_path}')
+    missing_keys, unexpected_keys = model.load_state_dict(state_dict, strict=False)
+    logger.info(f"Loaded model from {model_path}")
     logger.info(f"Missing keys: {missing_keys} \n Unexpected keys: {unexpected_keys}")
 
 
-def copy_config(args: argparse.Namespace, exp_root: Path, code_root: Path = Path("src/")):
+def copy_config(
+    args: argparse.Namespace, exp_root: Path, code_root: Path = Path("src/")
+):
     # ========== Copy source code ==========
-    python_files = list(code_root.glob('**/*.py'))
-    filtered_list = [file
-                     for file in python_files
-                     if 'checkpoints' not in str(file) and 'results' not in str(file)]
+    python_files = list(code_root.glob("**/*.py"))
+    filtered_list = [
+        file
+        for file in python_files
+        if "checkpoints" not in str(file) and "results" not in str(file)
+    ]
     for file in filtered_list:
-        file_dest = exp_root / 'src_code' / file
+        file_dest = exp_root / "src_code" / file
         file_dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(file, file_dest)
 
     # ========== Copy yaml files ==========
-    with open(exp_root / 'config.json', 'w') as fp:
+    with open(exp_root / "config.json", "w") as fp:
         json.dump(args, fp, indent=4)
 
 
-def compute_confidence_interval(data: Union[np.ndarray, torch.Tensor], axis=0) -> Tuple[np.ndarray, np.ndarray]:
+def compute_confidence_interval(
+    data: Union[np.ndarray, torch.Tensor], axis=0
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Compute 95% confidence interval
     :param data: An array of mean accuracy (or mAP) across a number of sampled episodes.
@@ -394,8 +424,11 @@ def compute_confidence_interval(data: Union[np.ndarray, torch.Tensor], axis=0) -
 
     # Casting is a pure mypy operation (no real impact), but its better to
     # explicit what is going on
-    a: np.ndarray = (cast(np.ndarray, data) if type(data) == np.ndarray
-                     else cast(Tensor, data).numpy())
+    a: np.ndarray = (
+        cast(np.ndarray, data)
+        if type(data) == np.ndarray
+        else cast(Tensor, data).numpy()
+    )
     m = np.mean(a, axis=axis)
     std = np.std(a, axis=axis)
 
@@ -513,9 +546,9 @@ def _check_and_coerce_cfg_value_type(replacement, original, key, full_key):
 
 def load_cfg_from_cfg_file(file: Path):
     cfg = {}
-    assert file.suffix == '.yaml', f"{file} is not a yaml file"
+    assert file.suffix == ".yaml", f"{file} is not a yaml file"
 
-    with open(file, 'r') as f:
+    with open(file, "r") as f:
         cfg_from_file = yaml.safe_load(f)
 
     for key in cfg_from_file:
@@ -527,20 +560,17 @@ def load_cfg_from_cfg_file(file: Path):
     return cfg
 
 
-def merge_cfg_from_list(cfg: CfgNode,
-                        cfg_list: List[str]):
+def merge_cfg_from_list(cfg: CfgNode, cfg_list: List[str]):
 
     new_cfg = copy.deepcopy(cfg)
     assert len(cfg_list) % 2 == 0, cfg_list
 
     for full_key, v in zip(cfg_list[0::2], cfg_list[1::2]):
-        subkey = full_key.split('.')[-1]
-        assert subkey in cfg, 'Non-existent key: {}'.format(full_key)
+        subkey = full_key.split(".")[-1]
+        assert subkey in cfg, "Non-existent key: {}".format(full_key)
 
         value = _decode_cfg_value(v)
-        value = _check_and_coerce_cfg_value_type(
-            value, cfg[subkey], subkey, full_key
-        )
+        value = _check_and_coerce_cfg_value_type(value, cfg[subkey], subkey, full_key)
 
         setattr(new_cfg, subkey, value)
 

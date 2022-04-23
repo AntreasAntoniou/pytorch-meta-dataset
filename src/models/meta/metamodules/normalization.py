@@ -11,7 +11,6 @@ class MetaLayerNorm(nn.LayerNorm, MetaModule):
     def forward(self, input, params=None):
         if params is None:
             params = OrderedDict(self.named_parameters())
-        weight = params.get('weight', None)
-        bias = params.get('bias', None)
-        return F.layer_norm(
-            input, self.normalized_shape, weight, bias, self.eps)
+        weight = params.get("weight", None)
+        bias = params.get("bias", None)
+        return F.layer_norm(input, self.normalized_shape, weight, bias, self.eps)

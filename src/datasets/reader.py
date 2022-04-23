@@ -16,11 +16,13 @@ class Reader(object):
     that reads data from TFRecords and assembles examples from them.
     """
 
-    def __init__(self,
-                 dataset_spec: Union[HDS, BDS, DS],
-                 split: Split,
-                 shuffle: bool,
-                 offset: int):
+    def __init__(
+        self,
+        dataset_spec: Union[HDS, BDS, DS],
+        split: Split,
+        shuffle: bool,
+        offset: int,
+    ):
         """Initializes a Reader from a source.
 
         The source is identified by dataset_spec and split.
@@ -52,7 +54,7 @@ class Reader(object):
           class_datasets: list of tf.data.Dataset, one for each class.
         """
         record_file_pattern = self.dataset_spec.file_pattern
-        index_file_pattern = '{}.index'
+        index_file_pattern = "{}.index"
         # We construct one dataset object per class. Each dataset outputs a stream
         # of `(example_string, dataset_id)` tuples.
         class_datasets = []
@@ -60,24 +62,34 @@ class Reader(object):
         pbar.set_description("Constructing class dataset")
         for dataset_id in pbar:
             class_id = self.class_set[dataset_id]  # noqa: E111
-            if record_file_pattern.startswith('{}_{}'):
+            if record_file_pattern.startswith("{}_{}"):
                 # TODO(lamblinp): Add support for sharded files if needed.
-                raise NotImplementedError('Sharded files are not supported yet. '  # noqa: E111
-                                          'The code expects one dataset per class.')
-            elif record_file_pattern.startswith('{}'):
-                data_path = os.path.join(self.base_path, record_file_pattern.format(class_id))  # noqa: E111
-                index_path = os.path.join(self.base_path, index_file_pattern.format(class_id))  # noqa: E111
+                raise NotImplementedError(
+                    "Sharded files are not supported yet. "  # noqa: E111
+                    "The code expects one dataset per class."
+                )
+            elif record_file_pattern.startswith("{}"):
+                data_path = os.path.join(
+                    self.base_path, record_file_pattern.format(class_id)
+                )  # noqa: E111
+                index_path = os.path.join(
+                    self.base_path, index_file_pattern.format(class_id)
+                )  # noqa: E111
             else:
-                raise ValueError('Unsupported record_file_pattern in DatasetSpec: %s. '  # noqa: E111
-                                 'Expected something starting with "{}" or "{}_{}".' %
-                                 record_file_pattern)
+                raise ValueError(
+                    "Unsupported record_file_pattern in DatasetSpec: %s. "  # noqa: E111
+                    'Expected something starting with "{}" or "{}_{}".'
+                    % record_file_pattern
+                )
             description = {"image": "byte", "label": "int"}
 
             # decode_fn = partial(self.decode_image, offset=self.offset)
-            dataset = TFRecordDataset(data_path=data_path,
-                                      index_path=index_path,
-                                      description=description,
-                                      shuffle=self.shuffle)
+            dataset = TFRecordDataset(
+                data_path=data_path,
+                index_path=index_path,
+                description=description,
+                shuffle=self.shuffle,
+            )
 
             class_datasets.append(dataset)
 

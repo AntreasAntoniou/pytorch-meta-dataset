@@ -26,21 +26,35 @@ from .datasets.utils import Split
 from .datasets.loader import get_dataloader
 from .models.ingredient import get_model
 from .models.meta.metamodules.module import MetaModule
-from .utils import (AverageMeter, save_checkpoint, get_model_dir,
-                    load_cfg_from_cfg_file, merge_cfg_from_list, find_free_port,
-                    setup, cleanup, main_process, copy_config, load_checkpoint,
-                    make_episode_visualization)
+from .utils import (
+    AverageMeter,
+    save_checkpoint,
+    get_model_dir,
+    load_cfg_from_cfg_file,
+    merge_cfg_from_list,
+    find_free_port,
+    setup,
+    cleanup,
+    main_process,
+    copy_config,
+    load_checkpoint,
+    make_episode_visualization,
+)
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description='Eval')
-    parser.add_argument('--base_config', type=str, required=True,
-                        help='config file')
-    parser.add_argument('--method_config', type=str, default=True,
-                        help='Method config file')
-    parser.add_argument('--data_config', type=str, default=True,
-                        help='Data config file. Mostly to describe episodes.')
-    parser.add_argument('--opts', default=None, nargs=argparse.REMAINDER)
+    parser = argparse.ArgumentParser(description="Eval")
+    parser.add_argument("--base_config", type=str, required=True, help="config file")
+    parser.add_argument(
+        "--method_config", type=str, default=True, help="Method config file"
+    )
+    parser.add_argument(
+        "--data_config",
+        type=str,
+        default=True,
+        help="Data config file. Mostly to describe episodes.",
+    )
+    parser.add_argument("--opts", default=None, nargs=argparse.REMAINDER)
 
     args = parser.parse_args()
     assert args.base_config is not None
@@ -55,17 +69,19 @@ def parse_args() -> argparse.Namespace:
     return cfg
 
 
-def meta_val(args: argparse.Namespace,
-             model: torch.nn.Module,
-             method: FSmethod,
-             val_loader: torch.utils.data.DataLoader) -> Tuple[Tensor, Tensor]:
+def meta_val(
+    args: argparse.Namespace,
+    model: torch.nn.Module,
+    method: FSmethod,
+    val_loader: torch.utils.data.DataLoader,
+) -> Tuple[Tensor, Tensor]:
     # Device
-    device = 'cpu' if not torch.cuda.is_available() else dist.get_rank()
+    device = "cpu" if not torch.cuda.is_available() else dist.get_rank()
     model.eval()
     method.eval()
 
     # Metrics
-    episode_acc = tensor([0.], device=device)
+    episode_acc = tensor([0.0], device=device)
 
     total_episodes = int(args.val_episodes / args.val_batch_size)
     tqdm_bar = tqdm(val_loader, total=total_episodes)
@@ -76,16 +92,16 @@ def meta_val(args: argparse.Namespace,
         y_s = support_labels.to(device)
         y_q = query_labels.to(device)
 
-        _, soft_preds_q = method(model=model,
-                                 support=support,
-                                 query=query,
-                                 y_s=y_s,
-                                 y_q=y_q)
+        _, soft_preds_q = method(
+            model=model, support=support, query=query, y_s=y_s, y_q=y_q
+        )
 
         soft_preds_q = soft_preds_q.to(device).detach()
         episode_acc += (soft_preds_q.argmax(-1) == y_q).float().mean()
 
-        tqdm_bar.set_description('Acc {:.2f}'.format((episode_acc / (i + 1) * 100).item()))
+        tqdm_bar.set_description(
+            "Acc {:.2f}".format((episode_acc / (i + 1) * 100).item())
+        )
 
     n_episodes = tensor(total_episodes, device=device)
 
@@ -95,16 +111,15 @@ def meta_val(args: argparse.Namespace,
     return episode_acc, n_episodes
 
 
-def main_worker(rank: int,
-                world_size: int,
-                args: argparse.Namespace) -> None:
+def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     logger.info(f"==> Running process rank {rank}.")
+    logger.info([f"==> {k}={v}" for k, v in vars(args).items()])
     if torch.cuda.is_available():
         setup(args.port, rank, world_size)
     device: int = rank
 
     if args.seed is not None:
-        rank_seed = 0 if rank == 'cpu' else rank
+        rank_seed = 0 if rank == "cpu" else rank
         args.seed += rank_seed
         random.seed(args.seed)
         torch.manual_seed(args.seed)
@@ -113,34 +128,44 @@ def main_worker(rank: int,
 
     # ============ Define loaders ================
 
-    train_loader, num_classes = get_dataloader(args=args,
-                                               source=args.base_source,
-                                               batch_size=args.batch_size,
-                                               world_size=world_size,
-                                               split=Split["TRAIN"],
-                                               episodic=args.episodic_training,
-                                               version=args.loader_version)
+    train_loader, num_classes = get_dataloader(
+        args=args,
+        source=args.base_source,
+        batch_size=args.batch_size,
+        world_size=world_size,
+        split=Split["TRAIN"],
+        episodic=args.episodic_training,
+        version=args.loader_version,
+    )
 
-    val_loader, _ = get_dataloader(args=args,
-                                   source=args.val_source,
-                                   batch_size=args.val_batch_size,
-                                   world_size=world_size,
-                                   split=Split["VALID"],
-                                   episodic=True,
-                                   version=args.loader_version)
+    val_loader, _ = get_dataloader(
+        args=args,
+        source=args.val_source,
+        batch_size=args.val_batch_size,
+        world_size=world_size,
+        split=Split["VALID"],
+        episodic=True,
+        version=args.loader_version,
+    )
 
     # ============ Define model ================
 
     num_classes = args.num_ways if args.episodic_training else num_classes
     if main_process(args):
-        logger.info("=> Creating model '{}' with {} classes".format(args.arch, num_classes))
+        logger.info(
+            "=> Creating model '{}' with {} classes".format(args.arch, num_classes)
+        )
     model = get_model(args=args, num_classes=num_classes).to(rank)
     if not isinstance(model, MetaModule) and world_size > 1:
         model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
         model = DDP(model, device_ids=[rank])
 
     if main_process(args):
-        logger.info('Number of model parameters: {}'.format(sum([p.data.nelement() for p in model.parameters()])))
+        logger.info(
+            "Number of model parameters: {}".format(
+                sum([p.data.nelement() for p in model.parameters()])
+            )
+        )
 
     exp_dir = get_model_dir(args)
     copy_config(args, exp_dir)
@@ -151,10 +176,14 @@ def main_worker(rank: int,
     train_acc = AverageMeter()
 
     if main_process(args):
-        metrics: Dict[str, Tensor] = {"train_loss": torch.zeros(args.num_updates // args.print_freq,
-                                                                dtype=torch.float32),
-                                      "val_acc": torch.zeros(args.num_updates // args.eval_freq,
-                                                             dtype=torch.float32)}
+        metrics: Dict[str, Tensor] = {
+            "train_loss": torch.zeros(
+                args.num_updates // args.print_freq, dtype=torch.float32
+            ),
+            "val_acc": torch.zeros(
+                args.num_updates // args.eval_freq, dtype=torch.float32
+            ),
+        }
 
     # ============ Optimizer ================
 
@@ -166,16 +195,18 @@ def main_worker(rank: int,
     method = all_methods[args.method](args=args)
     if not args.episodic_training:
         if args.loss not in __losses__:
-            raise ValueError(f'Please set the loss among : {list(__losses__.keys())}')
+            raise ValueError(f"Please set the loss among : {list(__losses__.keys())}")
         loss_fn = __losses__[args.loss]
-        loss_fn = loss_fn(args=args, num_classes=num_classes, reduction='none')
-    eval_fn = partial(meta_val, method=method, val_loader=val_loader, model=model, args=args)
+        loss_fn = loss_fn(args=args, num_classes=num_classes, reduction="none")
+    eval_fn = partial(
+        meta_val, method=method, val_loader=val_loader, model=model, args=args
+    )
 
     # ============ Start training ================
     model.train()
     method.train()
 
-    best_val_acc1 = 0.  # noqa: F841
+    best_val_acc1 = 0.0  # noqa: F841
     tqdm_bar = tqdm(train_loader, total=args.num_updates)
     for i, data in enumerate(tqdm_bar):
         if i >= args.num_updates:
@@ -189,17 +220,21 @@ def main_worker(rank: int,
             support, support_labels = support.to(device), support_labels.to(device)
             query, target = query.to(device), target.to(device)
 
-            loss, soft_preds = method(support=support,
-                                      query=query,
-                                      y_s=support_labels,
-                                      y_q=target,
-                                      model=model)  # [batch, q_shot]
+            loss, soft_preds = method(
+                support=support,
+                query=query,
+                y_s=support_labels,
+                y_q=target,
+                model=model,
+            )  # [batch, q_shot]
         else:
             (input_, target) = data
             input_, target = input_.to(device), target.to(device).long()
             loss, soft_preds = loss_fn(input_, target, model)
 
-        train_acc.update((soft_preds.argmax(-1) == target).float().mean().item(), i == 0)
+        train_acc.update(
+            (soft_preds.argmax(-1) == target).float().mean().item(), i == 0
+        )
         optimizer.zero_grad()
         loss.mean().backward()
         optimizer.step()
@@ -225,19 +260,23 @@ def main_worker(rank: int,
                 dist.all_reduce(n_episodes)
 
             val_acc /= n_episodes
-            is_best = (val_acc > best_val_acc1)
+            is_best = val_acc > best_val_acc1
             best_val_acc1 = max(val_acc, best_val_acc1)
 
             if main_process(args):
-                save_checkpoint(state={'iter': i,
-                                       'arch': args.arch,
-                                       'state_dict': model.state_dict(),
-                                       'best_prec1': best_val_acc1},
-                                is_best=is_best,
-                                folder=exp_dir)
+                save_checkpoint(
+                    state={
+                        "iter": i,
+                        "arch": args.arch,
+                        "state_dict": model.state_dict(),
+                        "best_prec1": best_val_acc1,
+                    },
+                    is_best=is_best,
+                    folder=exp_dir,
+                )
 
                 for k in metrics:
-                    if 'val' in k:
+                    if "val" in k:
                         metrics[k][int(i / args.eval_freq)] = eval(k)
 
                 for k, e in metrics.items():
@@ -247,30 +286,38 @@ def main_worker(rank: int,
         # ============ logger.info / log metrics ============
 
         if i % args.print_freq == 0 and main_process(args):
-            logger.info('Iteration: [{0}/{1}]\t'
-                        'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                        'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                        'Training accuracy {train_acc.val:.3f} ({train_acc.avg:.3f})\t'.format(
-                         i, args.num_updates, batch_time=batch_time,  # noqa: E121
-                         loss=losses, train_acc=train_acc))
+            logger.info(
+                "Iteration: [{0}/{1}]\t"
+                "Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t"
+                "Loss {loss.val:.4f} ({loss.avg:.4f})\t"
+                "Training accuracy {train_acc.val:.3f} ({train_acc.avg:.3f})\t".format(
+                    i,
+                    args.num_updates,
+                    batch_time=batch_time,  # noqa: E121
+                    loss=losses,
+                    train_acc=train_acc,
+                )
+            )
 
             train_loss = losses.avg
             for k in metrics:
-                if 'train' in k:
+                if "train" in k:
                     metrics[k][int(i / args.print_freq)] = eval(k)
 
         # ============ logger.info / log metrics ============
         if args.debug and i % args.visu_freq == 0 and args.episodic_training:
-            visu_path = os.path.join(exp_dir, 'episode_samples', args.loader_version)
+            visu_path = os.path.join(exp_dir, "episode_samples", args.loader_version)
             os.makedirs(visu_path, exist_ok=True)
-            path = os.path.join(visu_path, f'visu_{i}.png')
-            make_episode_visualization(args,
-                                       support[0].cpu().numpy(),
-                                       query[0].cpu().numpy(),
-                                       support_labels[0].cpu().numpy(),
-                                       target[0].cpu().numpy(),
-                                       soft_preds[0].cpu().numpy(),
-                                       path)
+            path = os.path.join(visu_path, f"visu_{i}.png")
+            make_episode_visualization(
+                args,
+                support[0].cpu().numpy(),
+                query[0].cpu().numpy(),
+                support_labels[0].cpu().numpy(),
+                target[0].cpu().numpy(),
+                soft_preds[0].cpu().numpy(),
+                path,
+            )
 
     cleanup()
 
@@ -287,10 +334,7 @@ if __name__ == "__main__":
     args.distributed = distributed
     if torch.cuda.is_available():
         args.port = find_free_port()
-        tmp.spawn(main_worker,
-                  args=(world_size, args),
-                  nprocs=world_size,
-                  join=True)
+        tmp.spawn(main_worker, args=(world_size, args), nprocs=world_size, join=True)
     else:
-        device = 'cpu'
+        device = "cpu"
         main_worker(device, world_size, args)
