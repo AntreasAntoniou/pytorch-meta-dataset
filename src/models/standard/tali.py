@@ -64,7 +64,7 @@ class TALIMP(nn.Module):
     def __init__(
         self,
         input_shape_dict: DottedDict,
-        model_root_dir: str = "model-deep-salad-17",
+        model_root_dir: str = "tali_models",
         model_name_to_download: str = "model-deep-salad-17",
         project_name: str = "machinelearningbrewery/godzilla-gcp-experiments",
         model_version: str = "v187",
@@ -75,12 +75,12 @@ class TALIMP(nn.Module):
         super().__init__()
         self.linear_layer_dict = None
         self.model = TALIModusPrime(
-            input_shape_dict,
-            model_root_dir,
-            model_name_to_download,
-            model_version,
-            project_name,
-            pretrained,
+            input_shape_dict=input_shape_dict,
+            model_root_dir=model_root_dir,
+            model_name_to_download=model_name_to_download,
+            model_version=model_version,
+            project_name=project_name,
+            pretrained=pretrained,
         )
         self.model.build()
         self.num_classes = num_classes
