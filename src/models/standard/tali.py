@@ -110,53 +110,25 @@ class TALIMP(nn.Module):
 
 
 def modus_prime_tali_viat_pretrained(
-    input_shape_dict: DottedDict = DottedDict(
-        {
-            "image": DottedDict(
-                {"shape": DottedDict(channels=3, width=288, length=176)}
-            ),
-            "text": DottedDict({"shape": DottedDict(sequence_length=77)}),
-        }
-    ),
-    model_root_dir: str = "tali_models/",
-    model_name_to_download: str = None,
-    pretrained: bool = True,
     num_classes: int = 1000,
+    **kwargs,
 ):
     """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
     """
 
     return TALIMP(
-        input_shape_dict=input_shape_dict,
-        model_root_dir=model_root_dir,
-        model_name_to_download=model_name_to_download,
-        pretrained=True,
-        num_classes=num_classes,
+        **default_cfgs["modus_prime_tali_viat_pretrained"], num_classes=num_classes
     )
 
 
 def modus_prime_tali_viat_scratch(
-    input_shape_dict: DottedDict = DottedDict(
-        {
-            "image": DottedDict(
-                {"shape": DottedDict(channels=3, width=288, length=176)}
-            ),
-            "text": DottedDict({"shape": DottedDict(sequence_length=77)}),
-        }
-    ),
-    model_root_dir: str = "tali_models/",
-    model_name_to_download: str = None,
-    pretrained: bool = True,
     num_classes: int = 1000,
+    **kwargs,
 ):
     """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
     """
     return TALIMP(
-        input_shape_dict=input_shape_dict,
-        model_root_dir=model_root_dir,
-        model_name_to_download=model_name_to_download,
-        pretrained=False,
-        num_classes=num_classes,
+        **default_cfgs["modus_prime_tali_viat_scratch"], num_classes=num_classes
     )
