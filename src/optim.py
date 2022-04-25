@@ -40,5 +40,5 @@ def get_optimizer(args: Namespace, model: torch.nn.Module) -> torch.optim.Optimi
     }
 
     assert args.optimizer_name in OPTIMIZER.keys()
-
+    print(OPTIMIZER[args.optimizer_name])
     return OPTIMIZER[args.optimizer_name]

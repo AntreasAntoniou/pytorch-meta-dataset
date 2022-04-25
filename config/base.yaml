@@ -34,9 +34,9 @@ DATA:
     base_source: 'ilsvrc_2012'
     val_source: 'ilsvrc_2012'
     test_source: 'ilsvrc_2012'
-    batch_size: 16
+    batch_size: 32
     split: 'train'
-    num_workers: 6
+    num_workers: 8
     train_transforms: ['resize', 'to_tensor', 'normalize', 'gaussian', 'jitter']
     test_transforms: ['resize', 'center_crop', 'to_tensor', 'normalize']
     gaussian_noise_std: 0.
