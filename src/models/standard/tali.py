@@ -36,7 +36,9 @@ default_cfgs = {
                 "text": DottedDict({"shape": DottedDict(sequence_length=77)}),
             }
         ),
-        model_name_to_download=None,
+        model_name_to_download="model-deep-salad-17",
+        project_name="machinelearningbrewery/godzilla-gcp-experiments",
+        model_version="v187",
         model_root_dir="tali/",
         pretrained=True,
     ),
@@ -49,7 +51,9 @@ default_cfgs = {
                 "text": DottedDict({"shape": DottedDict(sequence_length=77)}),
             }
         ),
-        model_name_to_download=None,
+        model_name_to_download="model-deep-salad-17",
+        project_name="machinelearningbrewery/godzilla-gcp-experiments",
+        model_version="v187",
         model_root_dir="tali/",
         pretrained=False,
     ),
@@ -61,7 +65,9 @@ class TALIMP(nn.Module):
         self,
         input_shape_dict: DottedDict,
         model_root_dir: str = None,
-        model_name_to_download: str = "resnet18",
+        model_name_to_download: str = "model-deep-salad-17",
+        project_name: str = "machinelearningbrewery/godzilla-gcp-experiments",
+        model_version: str = "v187",
         pretrained: bool = True,
         num_classes: int = 1000,
         **kwargs,
@@ -69,7 +75,12 @@ class TALIMP(nn.Module):
         super().__init__()
         self.linear_layer_dict = None
         self.model = TALIModusPrime(
-            input_shape_dict, model_root_dir, model_name_to_download, pretrained
+            input_shape_dict,
+            model_root_dir,
+            model_name_to_download,
+            model_version,
+            project_name,
+            pretrained,
         )
         self.model.build()
         self.num_classes = num_classes
@@ -86,8 +97,7 @@ class TALIMP(nn.Module):
         self.model.model.system.modality_embeddings["audio"] = nn.Identity()
 
     def forward_features(self, x_image):
-        out_image_features = self.model.forward_image(x_image)
-        return out_image_features
+        return self.model.forward_image(x_image)
 
     def forward(self, x_image, feature=False):
 
@@ -96,9 +106,7 @@ class TALIMP(nn.Module):
 
         out_image_features = self.model.forward_image(x_image)
 
-        out_image = self.linear_layer_dict["image"](out_image_features)
-
-        return out_image
+        return self.linear_layer_dict["image"](out_image_features)
 
 
 def modus_prime_tali_viat_pretrained(

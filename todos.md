@@ -18,3 +18,11 @@ Image classification stuff
 
 1. Fix up ImageNet, run experiments for all datasets
 
+
+
+TALI stuff:
+
+1. Add ImageNet baseline that adapts full model and evaluates
+2. Add CLIP baseline that adapts full model and evaluates
+3. Add ImageNet baseline that adapts only new final layer and evaluates
+4. Add CLIP baseline that adapts only new final layer and evaluates
