@@ -34,7 +34,7 @@ DATA:
     base_source: 'ilsvrc_2012'
     val_source: 'ilsvrc_2012'
     test_source: 'ilsvrc_2012'
-    batch_size: 256
+    batch_size: 40
     split: 'train'
     num_workers: 8
     train_transforms: ['resize', 'to_tensor', 'normalize', 'gaussian', 'jitter']
@@ -52,7 +52,7 @@ EVAL-GENERAL:
     eval_mode: 'test'
     val_episodes: 1
     val_batch_size: 1
-    iter: 1
+    iter: 16
     extract_batch_size: 10  # set to >0 to batch feature extraction (save memory) at inference
     center_features: False
 
