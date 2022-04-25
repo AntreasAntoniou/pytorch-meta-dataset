@@ -116,10 +116,9 @@ def modus_prime_tali_viat_pretrained(
     """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
     """
-
-    return TALIMP(
-        **default_cfgs["modus_prime_tali_viat_pretrained"], num_classes=num_classes
-    )
+    config = default_cfgs["modus_prime_tali_viat_pretrained"]
+    config["num_classes"] = num_classes
+    return TALIMP(config)
 
 
 def modus_prime_tali_viat_scratch(
@@ -129,6 +128,6 @@ def modus_prime_tali_viat_scratch(
     """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
     """
-    return TALIMP(
-        **default_cfgs["modus_prime_tali_viat_scratch"], num_classes=num_classes
-    )
+    config = default_cfgs["modus_prime_tali_viat_scratch"]
+    config["num_classes"] = num_classes
+    return TALIMP(config)
