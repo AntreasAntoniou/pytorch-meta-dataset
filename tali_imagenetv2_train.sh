@@ -4,7 +4,7 @@ PYTHONHASHSEED=0 python -m src.train --base_config config/base.yaml \
                         --opts \
                         base_source ilsvrc_2012_v2 \
                         val_source aircraft \
-                        arch vit_large_patch16_224 \
+                        arch modus_prime_tali_viat_pretrained \
                         debug False \
                         loader_version pytorch \
                         load_from_timm True \

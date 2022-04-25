@@ -10,6 +10,8 @@ def _cfg(model_name_to_download, model_root_dir, pretrained, **kwargs):
     return {
         "model_name_to_download": model_name_to_download,
         "model_root_dir": model_root_dir,
+        "mean": [0.0, 0.0, 0.0],
+        "std": [1.0, 1.0, 1.0],
         "input_shape_dict": (3, 224, 224),
         "pretrained": pretrained,
         **kwargs,
