@@ -108,7 +108,7 @@ def modus_prime_tali_viat_pretrained(
     """
     config = default_cfgs["modus_prime_tali_viat_pretrained"]
     config["num_classes"] = num_classes
-    return TALIMP(config)
+    return TALIMP(**config)
 
 
 def modus_prime_tali_viat_scratch(
@@ -120,4 +120,4 @@ def modus_prime_tali_viat_scratch(
     """
     config = default_cfgs["modus_prime_tali_viat_scratch"]
     config["num_classes"] = num_classes
-    return TALIMP(config)
+    return TALIMP(**config)
