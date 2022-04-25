@@ -76,14 +76,18 @@ class TALIMP(nn.Module):
         )
 
     def forward(self, x_image, x_text=None):
-        out_image = self.model.forward_image(x_image)
-        out_image = self.linear_layer_dict["image"](out_image)
+        out_image_features = self.model.forward_image(x_image)
+
+        print(out_image_features.shape)
+
+        out_image = self.linear_layer_dict["image"](out_image_features)
 
         if x_text is None:
             return out_image
 
-        out_text = self.model.forward_text(x_text)
-        out_text = self.linear_layer_dict["text"](out_text)
+        out_text_features = self.model.forward_text(x_text)
+        out_text = self.linear_layer_dict["text"](out_text_features)
+
         return out_image, out_text
 
 
