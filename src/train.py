@@ -190,6 +190,9 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
 
     optimizer = get_optimizer(args=args, model=model)
     scheduler = get_scheduler(args=args, optimizer=optimizer)
+    for param_group in optimizer.param_groups:
+        for name, param in param_group.items():
+            logger.info(f"{name}: {param.shape} {param.requires_grad}")
 
     # ============ Method ================
 
