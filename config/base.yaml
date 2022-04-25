@@ -50,7 +50,7 @@ EVAL-GENERAL:
     plot_freq: 10
     model_tag: 'best'
     eval_mode: 'test'
-    val_episodes: 100
+    val_episodes: 1
     val_batch_size: 1
     iter: 1
     extract_batch_size: 10  # set to >0 to batch feature extraction (save memory) at inference
