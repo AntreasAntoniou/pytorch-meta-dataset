@@ -1,10 +1,5 @@
-from typing import Union
-
-import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.init as init
-import torch.nn.functional as F
 from dotted_dict import DottedDict
 
 # TODO add short tutorial on how to add a new model in this repo
@@ -75,8 +70,35 @@ class TALIMP(nn.Module):
         return out_image, out_text
 
 
-model = TALIMP(**default_cfgs["modus_prime_tali_viat_pretrained"])
-x_image = torch.randn(2, 3, 288, 176)
-x_text = torch.randn(2, 77)
+def modus_prime_tali_viat_pretrained(
+    input_shape_dict: DottedDict,
+    model_root_dir: str = None,
+    model_name_to_download: str = "resnet18",
+    pretrained: bool = True,
+):
+    """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
+    Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
+    """
+    return TALIMP(
+        input_shape_dict=input_shape_dict,
+        model_root_dir=model_root_dir,
+        model_name_to_download=model_name_to_download,
+        pretrained=pretrained,
+    )
 
-out = model.forward(x_image, x_text)
+
+def modus_prime_tali_viat_scratch(
+    input_shape_dict: DottedDict,
+    model_root_dir: str = None,
+    model_name_to_download: str = "resnet18",
+    pretrained: bool = True,
+):
+    """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
+    Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
+    """
+    return TALIMP(
+        input_shape_dict=input_shape_dict,
+        model_root_dir=model_root_dir,
+        model_name_to_download=model_name_to_download,
+        pretrained=pretrained,
+    )
