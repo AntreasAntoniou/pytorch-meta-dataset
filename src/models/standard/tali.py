@@ -29,12 +29,7 @@ def _cfg(model_name_to_download, model_root_dir, pretrained, **kwargs):
 default_cfgs = {
     "modus_prime_tali_viat_pretrained": _cfg(
         input_shape_dict=DottedDict(
-            {
-                "image": DottedDict(
-                    {"shape": DottedDict(channels=3, width=288, length=176)}
-                ),
-                "text": DottedDict({"shape": DottedDict(sequence_length=77)}),
-            }
+            image=DottedDict(shape=DottedDict(channels=3, width=288, length=176)),
         ),
         model_name_to_download="model-deep-salad-17",
         project_name="machinelearningbrewery/godzilla-gcp-experiments",
@@ -44,12 +39,7 @@ default_cfgs = {
     ),
     "modus_prime_tali_viat_scratch": _cfg(
         input_shape_dict=DottedDict(
-            {
-                "image": DottedDict(
-                    {"shape": DottedDict(channels=3, width=288, length=176)}
-                ),
-                "text": DottedDict({"shape": DottedDict(sequence_length=77)}),
-            }
+            image=DottedDict(shape=DottedDict(channels=3, width=288, length=176)),
         ),
         model_name_to_download="model-deep-salad-17",
         project_name="machinelearningbrewery/godzilla-gcp-experiments",
