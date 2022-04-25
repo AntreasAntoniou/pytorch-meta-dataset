@@ -1,6 +1,7 @@
 from .resnet import *
 from .resnet_v2 import *
 from .vit import *
+from .tali import *
 
 from .resnet_v2 import default_cfgs as resnet_v2_config
 from .resnet import default_cfgs as resnet_config
