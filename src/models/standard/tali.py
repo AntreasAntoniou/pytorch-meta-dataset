@@ -96,6 +96,7 @@ def modus_prime_tali_viat_pretrained(
     model_root_dir: str = None,
     model_name_to_download: str = "resnet18",
     pretrained: bool = True,
+    num_classes: int = 1000,
 ):
     """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
@@ -105,6 +106,7 @@ def modus_prime_tali_viat_pretrained(
         model_root_dir=model_root_dir,
         model_name_to_download=model_name_to_download,
         pretrained=pretrained,
+        num_classes=num_classes,
     )
 
 
@@ -113,6 +115,7 @@ def modus_prime_tali_viat_scratch(
     model_root_dir: str = None,
     model_name_to_download: str = "resnet18",
     pretrained: bool = True,
+    num_classes: int = 1000,
 ):
     """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
@@ -122,4 +125,5 @@ def modus_prime_tali_viat_scratch(
         model_root_dir=model_root_dir,
         model_name_to_download=model_name_to_download,
         pretrained=pretrained,
+        num_classes=num_classes,
     )
