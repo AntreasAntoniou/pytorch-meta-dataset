@@ -1,6 +1,7 @@
 import torch
 import torchvision.transforms as transforms
 from PIL import ImageEnhance
+from rich.pretty import pprint
 
 from .utils import Split
 from .config import DataConfig
@@ -82,5 +83,6 @@ def train_transform(data_config: DataConfig):
         "gaussian": GaussianNoise(data_config.gaussian_noise_std),
     }
     augmentations = data_config.train_transforms
-
-    return transforms.Compose([transf_dict[key] for key in augmentations])
+    applied_transforms = [transf_dict[key] for key in augmentations]
+    pprint(applied_transforms)
+    return transforms.Compose(applied_transforms)
