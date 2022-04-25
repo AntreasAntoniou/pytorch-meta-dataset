@@ -39,7 +39,7 @@ default_cfgs = {
         model_name_to_download="model-deep-salad-17",
         project_name="machinelearningbrewery/godzilla-gcp-experiments",
         model_version="v187",
-        model_root_dir="tali/",
+        model_root_dir="tali_models/",
         pretrained=True,
     ),
     "modus_prime_tali_viat_scratch": _cfg(
@@ -54,7 +54,7 @@ default_cfgs = {
         model_name_to_download="model-deep-salad-17",
         project_name="machinelearningbrewery/godzilla-gcp-experiments",
         model_version="v187",
-        model_root_dir="tali/",
+        model_root_dir="tali_models/",
         pretrained=False,
     ),
 }
@@ -64,7 +64,7 @@ class TALIMP(nn.Module):
     def __init__(
         self,
         input_shape_dict: DottedDict,
-        model_root_dir: str = None,
+        model_root_dir: str = "model-deep-salad-17",
         model_name_to_download: str = "model-deep-salad-17",
         project_name: str = "machinelearningbrewery/godzilla-gcp-experiments",
         model_version: str = "v187",
