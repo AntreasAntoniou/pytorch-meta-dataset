@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 from functools import partial
+from pprint import pprint
 from typing import Any, Callable, Iterable, Tuple, Union, cast
 
 import torch
@@ -74,6 +75,7 @@ def get_dataloader(
             episode_descr_config=episod_config,
         )
 
+        pprint(int(batch_size / world_size))
         worker_init_fn = partial(worker_init_fn_, seed=args.seed)
         data_loader = DataLoader(
             dataset=dataset,
