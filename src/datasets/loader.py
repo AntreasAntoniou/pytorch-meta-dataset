@@ -75,11 +75,11 @@ def get_dataloader(
             episode_descr_config=episod_config,
         )
 
-        pprint(f"Batch size per worker {int(batch_size / world_size)}")
+        pprint(f"Batch size per worker {int(batch_size)}")
         worker_init_fn = partial(worker_init_fn_, seed=args.seed)
         data_loader = DataLoader(
             dataset=dataset,
-            batch_size=int(batch_size / world_size),
+            batch_size=batch_size,
             num_workers=data_config.num_workers,
             worker_init_fn=worker_init_fn,
         )
@@ -107,7 +107,7 @@ def get_dataloader(
             use_bilevel_ontology=episod_config.use_bilevel_ontology,
             episode_descr_config=episod_config,
             split=split,
-            batch_size=int(batch_size / world_size),
+            batch_size=int(batch_size),
             image_size=84,
             shuffle_buffer_size=300,
         )
