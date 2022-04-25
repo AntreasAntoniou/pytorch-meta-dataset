@@ -55,20 +55,35 @@ class TALIMP(nn.Module):
         model_root_dir: str = None,
         model_name_to_download: str = "resnet18",
         pretrained: bool = True,
+        num_classes: int = 1000,
+        **kwargs,
     ):
         super().__init__()
+        self.linear_layer_dict = None
         self.model = TALIModusPrime(
             input_shape_dict, model_root_dir, model_name_to_download, pretrained
         )
         self.model.build()
+        self.num_classes = num_classes
+        self.build()
+
+    def build(self):
+        self.linear_layer_dict = nn.ModuleDict(
+            dict(
+                image=nn.Linear(768, self.num_classes, bias=True),
+                text=nn.Linear(512, self.num_classes, bias=True),
+            )
+        )
 
     def forward(self, x_image, x_text=None):
         out_image = self.model.forward_image(x_image)
+        out_image = self.linear_layer_dict["image"](out_image)
 
         if x_text is None:
             return out_image
 
         out_text = self.model.forward_text(x_text)
+        out_text = self.linear_layer_dict["text"](out_text)
         return out_image, out_text
 
 
