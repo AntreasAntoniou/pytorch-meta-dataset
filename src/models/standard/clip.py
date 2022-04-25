@@ -3,6 +3,7 @@ import torch.nn as nn
 from dotted_dict import DottedDict
 
 # TODO add short tutorial on how to add a new model in this repo
+from gate.models.clip import CLIP
 from gate.models.tali import TALIModusPrime
 
 
@@ -27,52 +28,53 @@ def _cfg(model_name_to_download, model_root_dir, pretrained, **kwargs):
 
 
 default_cfgs = {
-    "modus_prime_tali_viat_pretrained": _cfg(
+    "ViT-B/16-pretrained": _cfg(
         input_shape_dict=DottedDict(
-            image=DottedDict(shape=DottedDict(channels=3, width=288, length=176)),
+            image=DottedDict(shape=DottedDict(channels=3, width=224, length=224)),
         ),
-        model_name_to_download="model-deep-salad-17",
-        project_name="machinelearningbrewery/godzilla-gcp-experiments",
-        model_version="v187",
-        model_root_dir="tali_models/",
+        model_name_to_download="ViT-B/16",
+        model_root_dir="clip_models/",
         pretrained=True,
     ),
-    "modus_prime_tali_viat_scratch": _cfg(
+    "ViT-B/16-scratch": _cfg(
         input_shape_dict=DottedDict(
-            image=DottedDict(shape=DottedDict(channels=3, width=288, length=176)),
+            image=DottedDict(shape=DottedDict(channels=3, width=224, length=224)),
         ),
-        model_name_to_download="model-deep-salad-17",
-        project_name="machinelearningbrewery/godzilla-gcp-experiments",
-        model_version="v187",
-        model_root_dir="tali_models/",
+        model_name_to_download="ViT-B/16",
+        model_root_dir="clip_models/",
         pretrained=False,
     ),
 }
 
 
-class TALIMP(nn.Module):
+class CLIPModel(nn.Module):
     def __init__(
         self,
         input_shape_dict: DottedDict,
         model_root_dir: str = "tali_models",
         model_name_to_download: str = "model-deep-salad-17",
-        project_name: str = "machinelearningbrewery/godzilla-gcp-experiments",
-        model_version: str = "v187",
         pretrained: bool = True,
         num_classes: int = 1000,
         **kwargs,
     ):
         super().__init__()
         self.linear_layer_dict = None
-        self.model = TALIModusPrime(
+        self.model = CLIP(
             input_shape_dict=input_shape_dict,
             model_root_dir=model_root_dir,
             model_name_to_download=model_name_to_download,
-            model_version=model_version,
-            project_name=project_name,
             pretrained=pretrained,
         )
-        self.model.build()
+        self.model.build(
+            batch_dict=DottedDict(
+                image=torch.randn(
+                    2,
+                    3,
+                    input_shape_dict.image.shape.width,
+                    input_shape_dict.image.shape.length,
+                )
+            )
+        )
         self.num_classes = num_classes
         self.build()
 
@@ -82,9 +84,10 @@ class TALIMP(nn.Module):
                 image=nn.Linear(768, self.num_classes, bias=True),
             )
         )
-        self.model.model.system.modality_embeddings["text"] = nn.Identity()
-        self.model.model.system.modality_embeddings["video"] = nn.Identity()
-        self.model.model.system.modality_embeddings["audio"] = nn.Identity()
+        self.model.visual.proj = None
+        self.model.token_embedding = nn.Identity()
+        self.model.transformer = nn.Identity()
+        self.ln_final = nn.Identity()
 
     def forward_features(self, x_image):
         return self.model.forward_image(x_image)
@@ -99,25 +102,25 @@ class TALIMP(nn.Module):
         return self.linear_layer_dict["image"](out_image_features)
 
 
-def modus_prime_tali_viat_pretrained(
+def clip_pretrained(
     num_classes: int = 1000,
     **kwargs,
 ):
     """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
     """
-    config = default_cfgs["modus_prime_tali_viat_pretrained"]
+    config = default_cfgs["ViT-B/16-pretrained"]
     config["num_classes"] = num_classes
-    return TALIMP(**config)
+    return CLIPModel(**config)
 
 
-def modus_prime_tali_viat_scratch(
+def clip_scratch(
     num_classes: int = 1000,
     **kwargs,
 ):
     """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
     """
-    config = default_cfgs["modus_prime_tali_viat_scratch"]
+    config = default_cfgs["ViT-B/16-scratch"]
     config["num_classes"] = num_classes
-    return TALIMP(**config)
+    return CLIPModel(**config)
