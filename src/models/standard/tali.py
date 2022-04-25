@@ -100,9 +100,16 @@ class TALIMP(nn.Module):
 
 
 def modus_prime_tali_viat_pretrained(
-    input_shape_dict: DottedDict,
-    model_root_dir: str = None,
-    model_name_to_download: str = "resnet18",
+    input_shape_dict: DottedDict = DottedDict(
+        {
+            "image": DottedDict(
+                {"shape": DottedDict(channels=3, width=288, length=176)}
+            ),
+            "text": DottedDict({"shape": DottedDict(sequence_length=77)}),
+        }
+    ),
+    model_root_dir: str = "tali_models/",
+    model_name_to_download: str = None,
     pretrained: bool = True,
     num_classes: int = 1000,
 ):
@@ -119,9 +126,16 @@ def modus_prime_tali_viat_pretrained(
 
 
 def modus_prime_tali_viat_scratch(
-    input_shape_dict: DottedDict,
-    model_root_dir: str = None,
-    model_name_to_download: str = "resnet18",
+    input_shape_dict: DottedDict = DottedDict(
+        {
+            "image": DottedDict(
+                {"shape": DottedDict(channels=3, width=288, length=176)}
+            ),
+            "text": DottedDict({"shape": DottedDict(sequence_length=77)}),
+        }
+    ),
+    model_root_dir: str = "tali_models/",
+    model_name_to_download: str = None,
     pretrained: bool = True,
     num_classes: int = 1000,
 ):
