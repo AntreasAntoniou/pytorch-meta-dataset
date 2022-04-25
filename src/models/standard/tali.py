@@ -12,8 +12,16 @@ def _cfg(model_name_to_download, model_root_dir, pretrained, **kwargs):
         "model_root_dir": model_root_dir,
         "mean": [0.0, 0.0, 0.0],
         "std": [1.0, 1.0, 1.0],
-        "input_shape_dict": (3, 224, 224),
+        "input_shape_dict": DottedDict(
+            {
+                "image": DottedDict(
+                    {"shape": DottedDict(channels=3, width=288, length=176)}
+                ),
+                "text": DottedDict({"shape": DottedDict(sequence_length=77)}),
+            }
+        ),
         "pretrained": pretrained,
+        "num_classes": 1000,
         **kwargs,
     }
 
@@ -105,7 +113,7 @@ def modus_prime_tali_viat_pretrained(
         input_shape_dict=input_shape_dict,
         model_root_dir=model_root_dir,
         model_name_to_download=model_name_to_download,
-        pretrained=pretrained,
+        pretrained=True,
         num_classes=num_classes,
     )
 
@@ -124,6 +132,6 @@ def modus_prime_tali_viat_scratch(
         input_shape_dict=input_shape_dict,
         model_root_dir=model_root_dir,
         model_name_to_download=model_name_to_download,
-        pretrained=pretrained,
+        pretrained=False,
         num_classes=num_classes,
     )
