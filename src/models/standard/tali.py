@@ -81,9 +81,9 @@ class TALIMP(nn.Module):
                 image=nn.Linear(768, self.num_classes, bias=True),
             )
         )
-        self.model.system.modality_embeddings["text"] = nn.Identity()
-        self.model.system.modality_embeddings["video"] = nn.Identity()
-        self.model.system.modality_embeddings["audio"] = nn.Identity()
+        self.model.model.system.modality_embeddings["text"] = nn.Identity()
+        self.model.model.system.modality_embeddings["video"] = nn.Identity()
+        self.model.model.system.modality_embeddings["audio"] = nn.Identity()
 
     def forward_features(self, x_image):
         out_image_features = self.model.forward_image(x_image)
