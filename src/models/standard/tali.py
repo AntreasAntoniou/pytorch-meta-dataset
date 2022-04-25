@@ -79,24 +79,26 @@ class TALIMP(nn.Module):
         self.linear_layer_dict = nn.ModuleDict(
             dict(
                 image=nn.Linear(768, self.num_classes, bias=True),
-                text=nn.Linear(512, self.num_classes, bias=True),
             )
         )
+        self.model.system.modality_embeddings["text"] = nn.Identity()
+        self.model.system.modality_embeddings["video"] = nn.Identity()
+        self.model.system.modality_embeddings["audio"] = nn.Identity()
 
-    def forward(self, x_image, x_text=None):
+    def forward_features(self, x_image):
         out_image_features = self.model.forward_image(x_image)
+        return out_image_features
 
-        print(out_image_features.shape)
+    def forward(self, x_image, feature=False):
+
+        if feature:
+            return self.forward_features(x_image)
+
+        out_image_features = self.model.forward_image(x_image)
 
         out_image = self.linear_layer_dict["image"](out_image_features)
 
-        if x_text is None:
-            return out_image
-
-        out_text_features = self.model.forward_text(x_text)
-        out_text = self.linear_layer_dict["text"](out_text_features)
-
-        return out_image, out_text
+        return out_image
 
 
 def modus_prime_tali_viat_pretrained(
@@ -116,6 +118,7 @@ def modus_prime_tali_viat_pretrained(
     """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
     """
+
     return TALIMP(
         input_shape_dict=input_shape_dict,
         model_root_dir=model_root_dir,
