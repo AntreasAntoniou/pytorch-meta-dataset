@@ -12,7 +12,7 @@ PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				 eval_mode test \
 				 val_batch_size 1 \
 				 loader_version pytorch \
-				 load_from_timm False ;\
+				 load_from_timm True ;\
 
 PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				--method_config config/method/finetune.yaml \
@@ -26,7 +26,7 @@ PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				 eval_mode test \
 				 val_batch_size 1 \
 				 loader_version pytorch \
-				 load_from_timm False ;\
+				 load_from_timm True ;\
 
 PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				--method_config config/method/finetune.yaml \
@@ -40,7 +40,7 @@ PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				 eval_mode test \
 				 val_batch_size 1 \
 				 loader_version pytorch \
-				 load_from_timm False ;\
+				 load_from_timm True ;\
 
 PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				--method_config config/method/finetune.yaml \
@@ -54,7 +54,7 @@ PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				 eval_mode test \
 				 val_batch_size 1 \
 				 loader_version pytorch \
-				 load_from_timm False ;\
+				 load_from_timm True ;\
 
 PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				--method_config config/method/finetune.yaml \
@@ -68,7 +68,7 @@ PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				 eval_mode test \
 				 val_batch_size 1 \
 				 loader_version pytorch \
-				 load_from_timm False ;\
+				 load_from_timm True ;\
 
 PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				--method_config config/method/finetune.yaml \
@@ -82,7 +82,7 @@ PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				 eval_mode test \
 				 val_batch_size 1 \
 				 loader_version pytorch \
-				 load_from_timm False ;\
+				 load_from_timm True ;\
 
 PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				--method_config config/method/finetune.yaml \
@@ -96,7 +96,7 @@ PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				 eval_mode test \
 				 val_batch_size 1 \
 				 loader_version pytorch \
-				 load_from_timm False ;\
+				 load_from_timm True ;\
 
 PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				--method_config config/method/finetune.yaml \
@@ -110,4 +110,4 @@ PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				 eval_mode test \
 				 val_batch_size 1 \
 				 loader_version pytorch \
-				 load_from_timm False ;\
+				 load_from_timm True ;\
