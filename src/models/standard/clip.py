@@ -51,8 +51,8 @@ class CLIPModel(nn.Module):
     def __init__(
         self,
         input_shape_dict: DottedDict,
-        model_root_dir: str = "tali_models",
-        model_name_to_download: str = "model-deep-salad-17",
+        model_root_dir: str = "clip_models",
+        model_name_to_download: str = "ViT-B/16",
         pretrained: bool = True,
         num_classes: int = 1000,
         **kwargs,
@@ -65,28 +65,30 @@ class CLIPModel(nn.Module):
             model_name_to_download=model_name_to_download,
             pretrained=pretrained,
         )
+
+        self.num_classes = num_classes
+        self.build()
+
+    def build(self):
         self.model.build(
             batch_dict=DottedDict(
                 image=torch.randn(
                     2,
                     3,
-                    input_shape_dict.image.shape.width,
-                    input_shape_dict.image.shape.length,
+                    self.model.input_shape_dict.image.shape.width,
+                    self.model.input_shape_dict.image.shape.length,
                 )
             )
         )
-        self.num_classes = num_classes
-        self.build()
 
-    def build(self):
         self.linear_layer_dict = nn.ModuleDict(
             dict(
                 image=nn.Linear(768, self.num_classes, bias=True),
             )
         )
-        self.model.visual.proj = None
-        self.model.token_embedding = nn.Identity()
-        self.model.transformer = nn.Identity()
+        self.model.model.visual.proj = None
+        self.model.model.token_embedding = nn.Identity()
+        self.model.model.transformer = nn.Identity()
         self.ln_final = nn.Identity()
 
     def forward_features(self, x_image):
