@@ -793,6 +793,10 @@ def _create_vision_transformer(variant, pretrained=False, default_cfg=None, **kw
         pretrained_custom_load="npz" in default_cfg["url"],
         **kwargs,
     )
+
+    for name, param in model.named_parameters():
+        print(name, param.shape)
+
     return model
 
 
