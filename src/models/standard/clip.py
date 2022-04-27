@@ -28,7 +28,7 @@ def _cfg(model_name_to_download, model_root_dir, pretrained, **kwargs):
 
 
 default_cfgs = {
-    "clip-ViT-B/16-pretrained": _cfg(
+    "clip_vit_b_16_pretrained": _cfg(
         input_shape_dict=DottedDict(
             image=DottedDict(shape=DottedDict(channels=3, width=224, length=224)),
         ),
@@ -36,7 +36,7 @@ default_cfgs = {
         model_root_dir="clip_models/",
         pretrained=True,
     ),
-    "clip-ViT-B/16-scratch": _cfg(
+    "clip_vit_b_16_scratch": _cfg(
         input_shape_dict=DottedDict(
             image=DottedDict(shape=DottedDict(channels=3, width=224, length=224)),
         ),
@@ -104,7 +104,7 @@ class CLIPModel(nn.Module):
         return self.linear_layer_dict["image"](out_image_features)
 
 
-def clip_pretrained(
+def clip_vit_b_16_pretrained(
     num_classes: int = 1000,
     **kwargs,
 ):
@@ -116,7 +116,7 @@ def clip_pretrained(
     return CLIPModel(**config)
 
 
-def clip_scratch(
+def clip_vit_b_16_scratch(
     num_classes: int = 1000,
     **kwargs,
 ):

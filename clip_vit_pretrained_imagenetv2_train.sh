@@ -4,7 +4,7 @@ PYTHONHASHSEED=0 python -m src.train --base_config config/base.yaml \
                         --opts \
                         base_source ilsvrc_2012_v2 \
                         val_source aircraft \
-                        arch clip-ViT-B/16-pretrained \
+                        arch clip_vit_b_16_pretrained \
                         debug False \
                         loader_version pytorch \
                         load_from_timm False \
