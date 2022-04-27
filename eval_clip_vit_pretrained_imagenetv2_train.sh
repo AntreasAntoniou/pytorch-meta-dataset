@@ -1,4 +1,4 @@
-export architecture=modus_prime_tali_viat_pretrained
+export architecture=clip_vit_b_16_pretrained
 
 PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
 				--method_config config/method/finetune.yaml \
