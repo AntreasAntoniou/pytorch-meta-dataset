@@ -408,7 +408,9 @@ class VisionTransformer(nn.Module):
         self.num_tokens = 2 if distilled else 1
         norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)
         act_layer = act_layer or nn.GELU
-        self.image_shape = (3, img_size, img_size)
+        self.image_shape = (
+            (3, img_size, img_size) if isinstance(img_size, int) else [3, *img_size]
+        )
         self.patch_embed = embed_layer(
             img_size=img_size,
             patch_size=patch_size,
@@ -524,7 +526,7 @@ class VisionTransformer(nn.Module):
 
     def forward_features(self, x):
         if x.shape[1:] != self.image_shape:
-            x = resize_custom(x, target_image_shape=self.image_shape)
+            x = resize_custom(x_image=x, target_image_shape=self.image_shape)
 
         x = self.patch_embed(x)
         cls_token = self.cls_token.expand(
