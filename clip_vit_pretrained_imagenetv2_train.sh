@@ -4,9 +4,9 @@ PYTHONHASHSEED=0 python -m src.train --base_config config/base.yaml \
                         --opts \
                         base_source ilsvrc_2012_v2 \
                         val_source aircraft \
-                        arch modus_prime_tali_viat_pretrained \
+                        arch clip-ViT-B/16-pretrained \
                         debug False \
                         loader_version pytorch \
-                        load_from_timm True \
+                        load_from_timm False \
                         num_workers 20 \
 

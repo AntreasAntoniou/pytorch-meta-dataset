@@ -28,7 +28,7 @@ def _cfg(model_name_to_download, model_root_dir, pretrained, **kwargs):
 
 
 default_cfgs = {
-    "ViT-B/16-pretrained": _cfg(
+    "clip-ViT-B/16-pretrained": _cfg(
         input_shape_dict=DottedDict(
             image=DottedDict(shape=DottedDict(channels=3, width=224, length=224)),
         ),
@@ -36,7 +36,7 @@ default_cfgs = {
         model_root_dir="clip_models/",
         pretrained=True,
     ),
-    "ViT-B/16-scratch": _cfg(
+    "clip-ViT-B/16-scratch": _cfg(
         input_shape_dict=DottedDict(
             image=DottedDict(shape=DottedDict(channels=3, width=224, length=224)),
         ),
