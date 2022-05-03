@@ -50,5 +50,5 @@ class ProtoNet(FSmethod):
         ce = -(one_hot_q * log_probas).sum(-1)  # [batch, q_shot, num_class]
 
         return collect_episode_metrics(
-            query_logits=ce, query_targets=y_q, phase_name=phase_name,
+            query_logits=log_probas, query_targets=y_q, phase_name=phase_name,
         )
