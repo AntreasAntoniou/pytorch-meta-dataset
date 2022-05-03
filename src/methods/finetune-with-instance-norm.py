@@ -12,7 +12,7 @@ from ..metrics import Metric
 from .utils import get_one_hot, extract_features
 
 
-class Finetune(FSmethod):
+class FinetuneWithInstanceNorm(FSmethod):
     """
     Implementation of Finetune (or Baseline method) (ICLR 2019) https://arxiv.org/abs/1904.04232
     """
@@ -103,8 +103,13 @@ class Finetune(FSmethod):
 
         # Initialize classifier
         with torch.no_grad():
+            input_instance_norm = nn.InstanceNorm2d(
+                support.shape[1], affine=True, track_running_stats=True
+            )
+            support_norm = input_instance_norm(support)
+            query_norm = input_instance_norm(query)
             feat_s, feat_q = extract_features(
-                self.extract_batch_size, support, query, model
+                self.extract_batch_size, support_norm, query_norm, model
             )
 
             classifier = nn.Linear(feat_s.size(-1), num_classes, bias=False).to(device)
@@ -133,9 +138,15 @@ class Finetune(FSmethod):
 
         # Define optimizer
         if self.finetune_all_layers:
-            params = list(model.parameters()) + list(classifier.parameters())
+            params = (
+                list(model.parameters())
+                + list(classifier.parameters())
+                + list(input_instance_norm.parameters())
+            )
         else:
-            params = list(classifier.parameters())
+            params = list(classifier.parameters()) + list(
+                input_instance_norm.parameters()
+            )
         optimizer = torch.optim.AdamW(
             params, lr=self.lr, weight_decay=self.weight_decay
         )
@@ -144,8 +155,10 @@ class Finetune(FSmethod):
         for i in range(1, self.iter):
             if self.finetune_all_layers:
                 model.train()
+                support_norm = input_instance_norm(support)
+                query_norm = input_instance_norm(query)
                 feat_s, feat_q = extract_features(
-                    self.extract_batch_size, support, query, model
+                    self.extract_batch_size, support_norm, query_norm, model
                 )
                 if self.cosine_head:
                     feat_s = F.normalize(feat_s, dim=-1)
