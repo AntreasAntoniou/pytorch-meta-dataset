@@ -5,7 +5,7 @@ import torch
 from torch import Tensor
 from loguru import logger
 from .utils import get_one_hot, compute_centroids, extract_features
-from .method import FSmethod
+from .method import FSmethod, collect_episode_per_step_metrics, collect_episode_metrics
 from ..metrics import Metric
 
 
@@ -20,30 +20,6 @@ class ProtoNet(FSmethod):
 
         super().__init__(args)
 
-    def record_info(
-        self,
-        metrics: Optional[Dict],
-        task_ids: Optional[Tuple],
-        iteration: int,
-        preds_q: Tensor,
-        y_q: Tensor,
-    ):
-        """
-        inputs:
-            support : tensor of shape [n_task, s_shot, feature_dim]
-            query : tensor of shape [n_task, q_shot, feature_dim]
-            y_s : tensor of shape [n_task, s_shot]
-            y_q : tensor of shape [n_task, q_shot] :
-        """
-        if metrics:
-            kwargs = {"gt": y_q, "preds": preds_q}
-
-            assert task_ids is not None
-            for metric_name in metrics:
-                metrics[metric_name].update(
-                    task_ids[0], task_ids[1], iteration, **kwargs
-                )
-
     def forward(
         self,
         model: torch.nn.Module,
@@ -51,9 +27,9 @@ class ProtoNet(FSmethod):
         query: Tensor,
         y_s: Tensor,
         y_q: Tensor,
-        metrics: Dict[str, Metric] = None,
         task_ids: Tuple[int, int] = None,
-    ) -> Tuple[Optional[Tensor], Tensor]:
+        phase_name: str = None,
+    ) -> None:
         """
         inputs:
             support : tensor of size [n_task, s_shot, c, h, w]
@@ -73,13 +49,6 @@ class ProtoNet(FSmethod):
         one_hot_q = get_one_hot(y_q, num_classes)  # [batch, q_shot, num_class]
         ce = -(one_hot_q * log_probas).sum(-1)  # [batch, q_shot, num_class]
 
-        soft_preds_q = log_probas.detach().exp()
-        self.record_info(
-            iteration=0,
-            metrics=metrics,
-            task_ids=task_ids,
-            preds_q=soft_preds_q.argmax(-1),
-            y_q=y_q,
+        return collect_episode_metrics(
+            query_logits=ce, query_targets=y_q, phase_name=phase_name,
         )
-
-        return ce, soft_preds_q

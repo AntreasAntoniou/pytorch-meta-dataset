@@ -1,5 +1,9 @@
 import argparse
+from collections import defaultdict
 from typing import Dict, Optional, Tuple
+
+import wandb
+from dotted_dict import DottedDict
 from loguru import logger
 import torch
 import torch.nn.functional as F
@@ -7,9 +11,10 @@ import torch.distributed as dist
 from torch import Tensor
 import torch.nn as nn
 
-from .method import FSmethod
+from .method import FSmethod, collect_episode_per_step_metrics, collect_episode_metrics
 from ..metrics import Metric
 from .utils import get_one_hot, extract_features
+from ..metrics.lamba_metrics import accuracy, cross_entropy_loss
 
 
 class Finetune(FSmethod):
@@ -26,36 +31,13 @@ class Finetune(FSmethod):
         self.weight_norm = args.finetune_weight_norm
         self.lr = args.finetune_lr
 
+        if not hasattr(self, "episode_metrics"):
+            self.episode_metrics = defaultdict(list)
+
         self.episodic_training = False
         self.weight_decay = args.finetune_weight_decay
 
         super().__init__(args)
-
-    def record_info(
-        self,
-        metrics: Optional[Dict],
-        task_ids: Optional[Tuple],
-        iteration: int,
-        preds_q: Tensor,
-        probs_s: Tensor,
-        y_q: Tensor,
-        y_s: Tensor,
-    ) -> None:
-        """
-        inputs:
-            support : tensor of shape [n_task, s_shot, feature_dim]
-            query : tensor of shape [n_task, q_shot, feature_dim]
-            y_s : tensor of shape [n_task, s_shot]
-            y_q : tensor of shape [n_task, q_shot] :
-        """
-        if metrics:
-            kwargs = {"preds": preds_q, "gt": y_q, "probs_s": probs_s, "gt_s": y_s}
-
-            assert task_ids is not None
-            for metric_name in metrics:
-                metrics[metric_name].update(
-                    task_ids[0], task_ids[1], iteration, **kwargs
-                )
 
     def _do_data_dependent_init(self, classifier: nn.Module, feat_s: Tensor):
         """Returns ops for the data-dependent init of g and maybe b_fc."""
@@ -72,9 +54,9 @@ class Finetune(FSmethod):
         query: Tensor,
         y_s: Tensor,
         y_q: Tensor,
-        metrics: Dict[str, Metric] = None,
         task_ids: Tuple[int, int] = None,
-    ) -> Tuple[Optional[Tensor], Tensor]:
+        phase_name: str = None,
+    ) -> None:
         """
         Corresponds to the TIM-GD inference
         inputs:
@@ -86,7 +68,16 @@ class Finetune(FSmethod):
 
         updates :
             self.weights : tensor of shape [n_task, num_class, feature_dim]
+            :param model:
+            :param support:
+            :param query:
+            :param y_s:
+            :param y_q:
+            :param task_ids:
+            :param phase_name:
+            :return:
         """
+
         device = dist.get_rank()
         n_tasks = support.size(0)
         if n_tasks > 1:
@@ -119,18 +110,15 @@ class Finetune(FSmethod):
 
             logits_q = self.temp * classifier(feat_q[0])
             logits_s = self.temp * classifier(feat_s[0])
-            preds_q = logits_q.argmax(-1)
-            probs_s = logits_s.softmax(-1)
-            self.record_info(
-                iteration=0,
-                task_ids=task_ids,
-                metrics=metrics,
-                preds_q=preds_q,
-                probs_s=probs_s,
-                y_q=y_q,
-                y_s=y_s,
-            )
 
+        collect_episode_per_step_metrics(
+            support_logits=logits_s,
+            support_targets=y_s,
+            query_logits=logits_q,
+            query_targets=y_q,
+            phase_name=phase_name,
+            task_idx=task_ids[0],
+        )
         # Define optimizer
         if self.finetune_all_layers:
             params = list(model.parameters()) + list(classifier.parameters())
@@ -141,7 +129,7 @@ class Finetune(FSmethod):
         )
 
         # Run adaptation
-        for i in range(1, self.iter):
+        for _ in range(1, self.iter):
             if self.finetune_all_layers:
                 model.train()
                 feat_s, feat_q = extract_features(
@@ -160,17 +148,17 @@ class Finetune(FSmethod):
             optimizer.step()
 
             with torch.no_grad():
-                preds_q = classifier(feat_q[0]).argmax(-1)
+                logits_q = self.temp * classifier(feat_q[0])
 
-                self.record_info(
-                    iteration=i,
-                    task_ids=task_ids,
-                    metrics=metrics,
-                    preds_q=preds_q,
-                    probs_s=probs_s,
-                    y_q=y_q,
-                    y_s=y_s,
+                collect_episode_per_step_metrics(
+                    support_logits=logits_s,
+                    support_targets=y_s,
+                    query_logits=logits_q,
+                    query_targets=y_q,
+                    phase_name=phase_name,
+                    task_idx=task_ids[0],
                 )
 
-        probs_q = classifier(feat_q[0]).softmax(-1).unsqueeze(0)
-        return loss.detach(), probs_q.detach()
+        return collect_episode_metrics(
+            query_logits=logits_q, query_targets=y_q, phase_name=phase_name,
+        )

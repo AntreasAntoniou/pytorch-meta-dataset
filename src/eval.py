@@ -1,7 +1,9 @@
 import os
 import random
 import argparse
+from collections import defaultdict
 from pathlib import Path
+from pprint import pformat
 
 import torch
 import numpy as np
@@ -9,6 +11,8 @@ import pandas as pd
 import torch.nn as nn
 import torch.multiprocessing as mp
 import torch.backends.cudnn as cudnn
+import wandb
+from dotted_dict import DottedDict
 from tqdm import trange
 from loguru import logger
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -68,7 +72,20 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     """
     logger.info(f"==> Running process rank {rank}.")
     setup(args.port, rank, world_size)
-
+    logger.info(f"==> Setting up wandb with args {vars(args).__dict__}")
+    wandb.init(
+        project="meta-dataset",
+        entity="machinelearnigbrewery",
+        config=vars(args).__dict__,
+        job_type="eval",
+        resume="allow",
+        name=f"{args.test_source}-"
+        f"{args.arch}-"
+        f"{args.val_episodes}-"
+        f"{args.shots}-"
+        f"{args.method}-"
+        f"{args.seed}",
+    )
     # ===============> Setup directories for current exp. <=================
     # ======================================================================
     exp_root = Path(os.path.join(args.res_path, args.method))
@@ -88,14 +105,6 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     # ===============> Load data <=================
     # =============================================
     current_split = "TEST" if args.eval_mode == "test" else "VALID"
-
-    # _, num_classes_base = get_dataloader(args=args,
-    #                                      source=args.base_source,
-    #                                      batch_size=args.batch_size,
-    #                                      world_size=world_size,
-    #                                      split=Split["TRAIN"],
-    #                                      episodic=True,
-    #                                      version=args.loader_version)
 
     test_loader, num_classes_test = get_dataloader(
         args=args,
@@ -121,10 +130,9 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
         model = DDP(model, device_ids=[rank])
 
     logger.info(
-        "Number of model parameters: {}".format(
-            sum([p.data.nelement() for p in model.parameters()])
-        )
+        f"Number of model parameters: {sum(p.data.nelement() for p in model.parameters())}"
     )
+
     if (
         not args.load_from_timm
     ):  # then we load the model from a local checkpoint obtained through training
@@ -134,9 +142,6 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
 
     # ===============> Define metrics <=================
     # ==================================================
-    metrics = {}
-    for metric_name in args.eval_metrics:
-        metrics[metric_name] = all_metrics[metric_name](args)
 
     iter_loader = iter(test_loader)
 
@@ -147,8 +152,8 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
 
     # ===============> Run method <=================
     # ==============================================
-    acc = 0.0
     tqdm_bar = trange(int(args.val_episodes / args.val_batch_size))
+    epoch_metrics = defaultdict(list)
     for i in tqdm_bar:
         # ======> Reload model checkpoint (some methods may modify model) <=======
         support, query, support_labels, query_labels = next(iter_loader)
@@ -157,43 +162,31 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
         support_labels = support_labels.to(device, non_blocking=True)
         query_labels = query_labels.to(device, non_blocking=True)
         task_ids = (i * args.val_batch_size, (i + 1) * args.val_batch_size)
-        loss, soft_preds_q = method(
+        episode_metrics = method(
             model=model,
-            metrics=metrics,
             task_ids=task_ids,
             support=support,
             query=query,
             y_s=support_labels,
             y_q=query_labels,
         )
-        soft_preds_q = soft_preds_q.to(device)
-        acc += (soft_preds_q.argmax(-1) == query_labels).float().mean()
+        for name, value in episode_metrics.items():
+            epoch_metrics[name].append(value)
 
-        tqdm_bar.set_description("Acc {:.2f}".format(100 * acc / (i + 1)))
+        tqdm_bar.set_description(f"{pformat(episode_metrics)}")
 
-        print(metrics)
+    # ===============> Compute final metrics <=================
+    # =========================================================
+    final_metrics = {}
+    for name, values in epoch_metrics.items():
+        final_metrics[f"{name}-mean"] = np.mean(values)
+        final_metrics[f"{name}-std"] = np.std(values)
+
+    # ===============> Save results <=================
+    # ===============================================
+    wandb.log(final_metrics)
 
     cleanup()
-
-
-def update_csv(args: argparse.Namespace, task_id: int, metrics: dict, path: str):
-    if "Acc" not in metrics:
-        raise ValueError("Cannot save csv result without Accuracy metric")
-
-    l2n_mean, l2n_conf = compute_confidence_interval(
-        metrics["Acc"].values[:task_id, -1]
-    )
-
-    new_entry = {param: args[param] for param in args.hyperparams}
-    new_entry["task"] = task_id
-    new_entry["acc"] = round(l2n_mean, 4)
-    new_entry["std"] = round(l2n_conf, 4)
-
-    records = [new_entry]
-
-    # Save back to dataframe
-    df = pd.DataFrame.from_records(records)
-    df.to_csv(path, index=False)
 
 
 if __name__ == "__main__":

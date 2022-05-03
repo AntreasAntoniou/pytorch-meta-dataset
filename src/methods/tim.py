@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 
-from .method import FSmethod
+from .method import FSmethod, collect_episode_metrics
 from ..metrics import Metric
 from .utils import get_one_hot, extract_features, compute_centroids
 
@@ -35,8 +35,8 @@ class TIM(FSmethod):
         n_tasks = samples.size(0)
         return self.temp * (
             samples.matmul(self.weights.transpose(1, 2))
-            - 1 / 2 * (self.weights**2).sum(2).view(n_tasks, 1, -1)
-            - 1 / 2 * (samples**2).sum(2).view(n_tasks, -1, 1)
+            - 1 / 2 * (self.weights ** 2).sum(2).view(n_tasks, 1, -1)
+            - 1 / 2 * (samples ** 2).sum(2).view(n_tasks, -1, 1)
         )
 
     def get_preds(self, samples: Tensor) -> Tensor:
@@ -48,8 +48,7 @@ class TIM(FSmethod):
             preds : Tensor of shape [n_task, shot]
         """
         logits = self.get_logits(samples)
-        preds = logits.argmax(2)
-        return preds
+        return logits.argmax(2)
 
     def compute_lambda(self, support: Tensor, query: Tensor, y_s: Tensor) -> None:
         """
@@ -67,49 +66,6 @@ class TIM(FSmethod):
         if self.loss_weights[0] == "auto":
             self.loss_weights[0] = (1 + self.loss_weights[2]) * self.N_s / self.N_q
 
-    def record_info(
-        self,
-        metrics: Optional[Dict],
-        task_ids: Optional[Tuple],
-        iteration: int,
-        new_time: float,
-        support: Tensor,
-        query: Tensor,
-        y_s: Tensor,
-        y_q: Tensor,
-    ) -> None:
-        """
-        inputs:
-            support : Tensor of shape [n_task, s_shot, feature_dim]
-            query : Tensor of shape [n_task, q_shot, feature_dim]
-            y_s : Tensor of shape [n_task, s_shot]
-            y_q : Tensor of shape [n_task, q_shot]
-        """
-        if metrics:
-            logits_s = self.get_logits(support).detach()
-            probs_s = logits_s.softmax(-1)
-
-            logits_q = self.get_logits(query).detach()
-            preds_q = logits_q.argmax(2)
-            probs_q = logits_q.softmax(2)
-
-            kwargs = {
-                "probs": probs_q,
-                "probs_s": probs_s,
-                "preds": preds_q,
-                "gt": y_q,
-                "z_s": support,
-                "z_q": query,
-                "gt_s": y_s,
-                "weights": self.weights,
-            }
-
-            assert task_ids is not None
-            for metric_name in metrics:
-                metrics[metric_name].update(
-                    task_ids[0], task_ids[1], iteration, **kwargs
-                )
-
 
 class TIM_GD(TIM):
     def __init__(self, args: argparse.Namespace):
@@ -123,8 +79,8 @@ class TIM_GD(TIM):
         query: Tensor,
         y_s: Tensor,
         y_q: Tensor,
-        metrics: Dict[str, Metric] = None,
         task_ids: Tuple[int, int] = None,
+        phase_name: str = None,
     ) -> Tuple[Optional[Tensor], Tensor]:
         """
         See method.py for description of arguments.
@@ -145,26 +101,13 @@ class TIM_GD(TIM):
         feat_q = F.normalize(feat_q, dim=-1)
 
         # Initialize weights
-        t0 = time.time()
         self.compute_lambda(support=feat_s, query=feat_q, y_s=y_s)
         self.weights = compute_centroids(feat_s, y_s)
-        self.record_info(
-            iteration=0,
-            task_ids=task_ids,
-            metrics=metrics,
-            new_time=time.time() - t0,
-            support=feat_s,
-            query=feat_q,
-            y_s=y_s,
-            y_q=y_q,
-        )
 
         # Run adaptation
-        t0 = time.time()
         self.weights.requires_grad_()
         optimizer = torch.optim.Adam([self.weights], lr=self.lr)
-        for i in range(self.iter):
-
+        for _ in range(self.iter):
             logits_s = self.get_logits(feat_s)
             logits_q = self.get_logits(feat_q)
 
@@ -181,20 +124,9 @@ class TIM_GD(TIM):
             loss.backward()
             optimizer.step()
 
-            t1 = time.time()
-            self.record_info(
-                iteration=i,
-                task_ids=task_ids,
-                metrics=metrics,
-                new_time=t1 - t0,
-                support=feat_s,
-                query=feat_q,
-                y_s=y_s,
-                y_q=y_q,
-            )
-            t0 = time.time()
-
-        return loss.detach(), q_probs.detach()
+        return collect_episode_metrics(
+            query_logits=logits_q, query_targets=y_q, phase_name=phase_name,
+        )
 
 
 class TIM_ADM(TIM):
@@ -273,8 +205,8 @@ class TIM_ADM(TIM):
         query: Tensor,
         y_s: Tensor,
         y_q: Tensor,
-        metrics: Dict[str, Metric] = None,
         task_ids: Tuple[int, int] = None,
+        phase_name: str = None,
     ) -> Tuple[Optional[Tensor], Tensor]:
         """
         See method.py for description of arguments.
@@ -299,35 +231,16 @@ class TIM_ADM(TIM):
         t0 = time.time()
         self.compute_lambda(support=feat_s, query=feat_q, y_s=y_s)
         self.weights = compute_centroids(feat_s, y_s)
-        self.record_info(
-            iteration=0,
-            metrics=metrics,
-            task_ids=task_ids,
-            new_time=time.time() - t0,
-            support=feat_s,
-            query=feat_q,
-            y_s=y_s,
-            y_q=y_q,
-        )
 
         # Run adaptation
-        t0 = time.time()
         y_s_one_hot = get_one_hot(y_s, num_classes)
         P_q = self.get_logits(feat_q).softmax(2)
-        for i in range(1, self.iter):
+        for _ in range(1, self.iter):
             self.q_update(P=P_q)
             self.weights_update(feat_s, feat_q, y_s_one_hot)
-            P_q = self.get_logits(feat_q).softmax(2)
-            t1 = time.time()
-            self.record_info(
-                iteration=i,
-                metrics=metrics,
-                task_ids=task_ids,
-                new_time=t1 - t0,
-                support=feat_s,
-                query=feat_q,
-                y_s=y_s,
-                y_q=y_q,
-            )
-            t0 = time.time()
-        return None, P_q
+            logits_q = self.get_logits(feat_q)
+            P_q = logits_q.softmax(2)
+
+        return collect_episode_metrics(
+            query_logits=logits_q, query_targets=y_q, phase_name=phase_name,
+        )

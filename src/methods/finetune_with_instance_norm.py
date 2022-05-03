@@ -7,7 +7,7 @@ import torch.distributed as dist
 from torch import Tensor
 import torch.nn as nn
 
-from .method import FSmethod
+from .method import FSmethod, collect_episode_per_step_metrics, collect_episode_metrics
 from ..metrics import Metric
 from .utils import get_one_hot, extract_features
 
@@ -72,9 +72,9 @@ class FinetuneWithInstanceNorm(FSmethod):
         query: Tensor,
         y_s: Tensor,
         y_q: Tensor,
-        metrics: Dict[str, Metric] = None,
         task_ids: Tuple[int, int] = None,
-    ) -> Tuple[Optional[Tensor], Tensor]:
+        phase_name: str = None,
+    ) -> None:
         """
         Corresponds to the TIM-GD inference
         inputs:
@@ -132,16 +132,13 @@ class FinetuneWithInstanceNorm(FSmethod):
 
             logits_q = self.temp * classifier(feat_q[0])
             logits_s = self.temp * classifier(feat_s[0])
-            preds_q = logits_q.argmax(-1)
-            probs_s = logits_s.softmax(-1)
-            self.record_info(
-                iteration=0,
-                task_ids=task_ids,
-                metrics=metrics,
-                preds_q=preds_q,
-                probs_s=probs_s,
-                y_q=y_q,
-                y_s=y_s,
+            collect_episode_per_step_metrics(
+                support_logits=logits_s,
+                support_targets=y_s,
+                query_logits=logits_q,
+                query_targets=y_q,
+                phase_name=phase_name,
+                task_idx=task_ids[0],
             )
 
         # Define optimizer
@@ -160,7 +157,7 @@ class FinetuneWithInstanceNorm(FSmethod):
         )
 
         # Run adaptation
-        for i in range(1, self.iter):
+        for _ in range(1, self.iter):
             model.train()
 
             support_norm = input_instance_norm(
@@ -192,17 +189,17 @@ class FinetuneWithInstanceNorm(FSmethod):
             optimizer.step()
 
             with torch.no_grad():
-                preds_q = classifier(feat_q[0]).argmax(-1)
+                logits_q = self.temp * classifier(feat_q[0])
 
-                self.record_info(
-                    iteration=i,
-                    task_ids=task_ids,
-                    metrics=metrics,
-                    preds_q=preds_q,
-                    probs_s=probs_s,
-                    y_q=y_q,
-                    y_s=y_s,
+                collect_episode_per_step_metrics(
+                    support_logits=logits_s,
+                    support_targets=y_s,
+                    query_logits=logits_q,
+                    query_targets=y_q,
+                    phase_name=phase_name,
+                    task_idx=task_ids[0],
                 )
 
-        probs_q = classifier(feat_q[0]).softmax(-1).unsqueeze(0)
-        return loss.detach(), probs_q.detach()
+        return collect_episode_metrics(
+            query_logits=logits_q, query_targets=y_q, phase_name=phase_name
+        )
