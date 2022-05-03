@@ -83,6 +83,7 @@ EVAL-EPISODES:
 
 METHOD:
     episodic_training: False
+    finetune_all_layers: False
 
 DISTRIBUTED:
     gpus: [0]

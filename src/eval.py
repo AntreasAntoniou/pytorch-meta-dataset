@@ -69,6 +69,7 @@ def main_worker(args: argparse.Namespace) -> None:
         f"{args.val_episodes}-"
         f"{args.num_ways}-"
         f"{args.method}-"
+        f"{args.finetune_all_layers}-"
         f"{args.seed}",
     )
     # ===============> Setup directories for current exp. <=================
