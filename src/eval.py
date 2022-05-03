@@ -56,7 +56,7 @@ def hash_config(args: argparse.Namespace) -> str:
     return str(res)[-10:].split(".")[0]
 
 
-def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
+def main_worker(args: argparse.Namespace) -> None:
     """
     Run the evaluation over all the tasks in parallel
     inputs:
@@ -70,8 +70,7 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     returns :
         results : List of the mean accuracy for each number of support shots
     """
-    logger.info(f"==> Running process rank {rank}.")
-    setup(args.port, rank, world_size)
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     logger.info(f"==> Setting up wandb with args {args}")
     wandb.init(
         project=os.environ.get("WANDB_PROJECT"),
@@ -95,7 +94,6 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     copy_config(args, exp_root)
 
     logger.info(f"==>  Saving all at {exp_root}")
-    device = rank
     if args.seed is not None:
         random.seed(args.seed)
         torch.manual_seed(args.seed)
@@ -124,10 +122,7 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     # ===============> Load model <=================
     # ==============================================
     # num_classes = 5 if args.episodic_training else num_classes_base
-    model = get_model(args=args, num_classes=5).to(rank)
-    if not isinstance(model, MetaModule) and world_size > 1:
-        model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
-        model = DDP(model, device_ids=[rank])
+    model = get_model(args=args, num_classes=5).to(device)
 
     logger.info(
         f"Number of model parameters: {sum(p.data.nelement() for p in model.parameters())}"
@@ -147,7 +142,7 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
 
     # ===============> Load method <=================
     # ===============================================
-    method = all_methods[args.method](args=args)
+    method = all_methods[args.method](args=args).to(device)
     method.eval()
 
     # ===============> Run method <=================
@@ -158,9 +153,10 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
         # ======> Reload model checkpoint (some methods may modify model) <=======
         support, query, support_labels, query_labels = next(iter_loader)
         # logger.info(query_labels.size())
-
-        support_labels = support_labels.to(device, non_blocking=True)
-        query_labels = query_labels.to(device, non_blocking=True)
+        support = support.to(device)
+        query = query.to(device)
+        support_labels = support_labels.to(device)
+        query_labels = query_labels.to(device)
         task_ids = (i * args.val_batch_size, (i + 1) * args.val_batch_size)
         episode_metrics = method(
             model=model,
@@ -198,10 +194,10 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     args = parse_args()
-    os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(x) for x in args.gpus)
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
 
     world_size = len(args.gpus)
     distributed = world_size > 1
     args.distributed = distributed
     args.port = find_free_port()
-    mp.spawn(main_worker, args=(world_size, args), nprocs=world_size, join=True)
+    main_worker(args=args)
