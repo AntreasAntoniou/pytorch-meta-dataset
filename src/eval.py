@@ -194,7 +194,7 @@ def main_worker(args: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     args = parse_args()
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
+    os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(x) for x in args.gpus)
 
     world_size = len(args.gpus)
     distributed = world_size > 1
