@@ -72,7 +72,7 @@ def parse_args() -> argparse.Namespace:
     wandb.init(
         project=os.environ.get("WANDB_PROJECT"),
         entity=os.environ.get("WANDB_ENTITY"),
-        config=cfg.__dict__,
+        config=cfg,
         job_type="eval",
         resume="allow",
         name=f"{cfg.test_source}-"
