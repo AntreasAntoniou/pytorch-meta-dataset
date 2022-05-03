@@ -74,8 +74,8 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     setup(args.port, rank, world_size)
     logger.info(f"==> Setting up wandb with args {vars(args).__dict__}")
     wandb.init(
-        project="meta-dataset",
-        entity="machinelearnigbrewery",
+        project=os.environ.get("WANDB_PROJECT"),
+        entity=os.environ.get("WANDB_ENTITY"),
         config=vars(args).__dict__,
         job_type="eval",
         resume="allow",
