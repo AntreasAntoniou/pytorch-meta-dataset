@@ -181,5 +181,5 @@ def main_worker(args: argparse.Namespace) -> None:
 if __name__ == "__main__":
     args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(x) for x in args.gpus)
-
+    logger.info(f"Using GPUs: {os.environ['CUDA_VISIBLE_DEVICES']}")
     main_worker(args=args)
