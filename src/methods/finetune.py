@@ -77,8 +77,10 @@ class Finetune(FSmethod):
             :param phase_name:
             :return:
         """
+        device = (
+            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        )
 
-        device = dist.get_rank()
         n_tasks = support.size(0)
         if n_tasks > 1:
             raise ValueError(

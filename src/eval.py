@@ -108,13 +108,11 @@ def main_worker(args: argparse.Namespace) -> None:
         args=args,
         source=args.test_source,
         batch_size=args.val_batch_size,
-        world_size=world_size,
         split=Split[current_split],
         episodic=True,
         version=args.loader_version,
     )
 
-    # logger.info(f"BASE dataset: {args.base_source} ({num_classes_base} classes)")
     logger.info(
         f"{current_split} dataset: {args.test_source} ({num_classes_test} classes)"
     )
@@ -196,8 +194,8 @@ if __name__ == "__main__":
     args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(x) for x in args.gpus)
 
-    world_size = len(args.gpus)
-    distributed = world_size > 1
-    args.distributed = distributed
-    args.port = find_free_port()
+    # world_size = len(args.gpus)
+    # distributed = world_size > 1
+    # args.distributed = distributed
+    # args.port = find_free_port()
     main_worker(args=args)

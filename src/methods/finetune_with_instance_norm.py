@@ -87,7 +87,10 @@ class FinetuneWithInstanceNorm(FSmethod):
         updates :
             self.weights : tensor of shape [n_task, num_class, feature_dim]
         """
-        device = dist.get_rank()
+        device = (
+            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        )
+
         n_tasks = support.size(0)
         if n_tasks > 1:
             raise ValueError(

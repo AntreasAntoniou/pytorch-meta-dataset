@@ -39,7 +39,9 @@ class MAML(FSmethod):
         iter_ = self.train_iter if self.training else self.iter
 
         model.train()
-        device = torch.distributed.get_rank()
+        device = (
+            torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        )
 
         outer_loss = torch.tensor(0.0, device=device)
         soft_preds = torch.zeros_like(get_one_hot(y_q, y_s.unique().size(0)))
