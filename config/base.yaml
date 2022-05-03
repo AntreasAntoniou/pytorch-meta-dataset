@@ -86,4 +86,4 @@ METHOD:
     finetune_all_layers: False
 
 DISTRIBUTED:
-    gpus: "0"
+    gpus: "0,"
