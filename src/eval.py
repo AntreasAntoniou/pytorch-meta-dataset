@@ -169,6 +169,7 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
             query=query,
             y_s=support_labels,
             y_q=query_labels,
+            phase_name="test",
         )
         for name, value in episode_metrics.items():
             epoch_metrics[name].append(value)
