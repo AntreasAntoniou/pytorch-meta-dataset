@@ -144,7 +144,7 @@ class FinetuneWithInstanceNorm(FewShotMethod):
                 query_targets=y_q,
                 phase_name=phase_name,
                 task_idx=task_ids[0],
-                step=0,
+                step_idx=0,
             )
 
         # Define optimizer
