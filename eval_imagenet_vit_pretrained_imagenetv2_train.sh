@@ -1,6 +1,6 @@
 export architecture=vit_base_patch16_224
 gpus=$1
-for dataset in ilsvrc_2012 saircraft traffic_sign dtd omniglot mscoco cu_birds
+for dataset in ilsvrc_2012_v2 saircraft traffic_sign dtd omniglot mscoco cu_birds
   do
     for method in config/method/protonet.yaml config/method/finetune.yaml config/method/finetune-with-instance-norm.yaml config/method/simpleshot.yaml config/method/maml.yaml config/method/tim_adm.yaml
       do
