@@ -4,7 +4,7 @@ from torch import Tensor
 
 
 def accuracy(logits: Tensor, targets: Tensor) -> Tensor:
-    return torch.mean(targets.eq(logits.argmax(-1)))
+    return torch.mean(targets.eq(logits.argmax(-1)).float())
 
 
 def cross_entropy_loss(logits, targets):
