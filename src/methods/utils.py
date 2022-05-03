@@ -49,7 +49,7 @@ def extract_features(bs: int, support: Tensor, query: Tensor, model: nn.Module):
     # Extract support and query features
     n_tasks, shots_s, C, H, W = support.size()
     shots_q = query.size(1)
-    device = "cpu" if not torch.cuda.is_available() else dist.get_rank()
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     if bs > 0:
         if n_tasks > 1:

@@ -122,11 +122,7 @@ def make_episode_visualization(
 
     fig = plt.figure(figsize=(4 * n_columns, 4 * n_rows), dpi=100)
     grid = ImageGrid(
-        fig,
-        111,
-        nrows_ncols=(n_rows, n_columns),
-        axes_pad=(0.4, 0.4),
-        direction="row",
+        fig, 111, nrows_ncols=(n_rows, n_columns), axes_pad=(0.4, 0.4), direction="row",
     )
 
     # 1) visualize the support set
@@ -236,45 +232,6 @@ def make_plot(
         ax.plot(0, 0, "-", c=color, label="Support", linewidth=4)
 
     ax.imshow(img)
-
-
-def main_process(args) -> bool:
-    if args.distributed:
-        return dist.get_rank() == 0
-
-    return True
-
-
-def setup(port: int, rank: int, world_size: int) -> None:
-    """
-    Used for distributed learning
-    """
-    environ["MASTER_ADDR"] = "localhost"
-    environ["MASTER_PORT"] = str(port)
-
-    # initialize the process group
-    dist.init_process_group("nccl", rank=rank, world_size=world_size)
-
-
-def cleanup() -> None:
-    """
-    Used for distributed learning
-    """
-    dist.destroy_process_group()
-
-
-def find_free_port() -> int:
-    """
-    Used for distributed learning
-    """
-    import socket
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(("", 0))
-    port = sock.getsockname()[1]
-    sock.close()
-
-    return port
 
 
 def get_one_hot(y_s: Tensor, num_classes: int) -> Tensor:
