@@ -1,5 +1,6 @@
 export architecture=modus_prime_tali_viat_scratch
 gpus=$1
+export CUDA_VISIBLE_DEVICES=$gpus
 for dataset in aircraft traffic_sign dtd omniglot mscoco cu_birds
   do
     for method in config/method/protonet.yaml config/method/finetune.yaml config/method/finetune_all.yaml config/method/finetune-with-instance-norm.yaml config/method/finetune-with-instance-norm-all.yaml config/method/simpleshot.yaml config/method/maml.yaml config/method/tim_adm.yaml

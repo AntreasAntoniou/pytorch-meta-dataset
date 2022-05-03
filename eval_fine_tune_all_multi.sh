@@ -1,4 +1,5 @@
 gpus=$1
+export CUDA_VISIBLE_DEVICES=$gpus
 for architecture in clip_vit_b_16_pretrained vit_base_patch16_224 modus_prime_tali_viat_pretrained modus_prime_tali_viat_scratch
   do
     for dataset in aircraft traffic_sign dtd omniglot mscoco cu_birds

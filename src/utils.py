@@ -44,11 +44,6 @@ def parse_args() -> argparse.Namespace:
     if args.opts is not None:
         cfg = merge_cfg_from_list(cfg, args.opts)
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(x) for x in cfg.gpus)
-    for gpu_idx in cfg.gpus:
-        torch.cuda.set_device(gpu_idx)
-        logger.info(f"GPU {gpu_idx} is set.")
-
     logger.info(
         f"Using GPUs with IDs: {torch.cuda.current_device()} \n"
         f"A total of {torch.cuda.device_count()} GPUs"

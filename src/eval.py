@@ -109,8 +109,8 @@ def main_worker(args: argparse.Namespace) -> None:
     # num_classes = 5 if args.episodic_training else num_classes_base
     model = get_model(args=args, num_classes=5).to(device)
 
-    if len(args.gpus) > 1:
-        model = torch.nn.DataParallel(model, args.gpus)
+    if torch.cuda.is_available() and torch.cuda.device_count() > 1:
+        model = torch.nn.DataParallel(model)
 
     logger.info(
         f"Number of model parameters: {sum(p.data.nelement() for p in model.parameters())}"
