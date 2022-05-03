@@ -48,10 +48,7 @@ class ProtoNet(FSmethod):
         log_probas = (-l2_distance).log_softmax(-1)  # [batch, q_shot, num_class]
         one_hot_q = get_one_hot(y_q, num_classes)  # [batch, q_shot, num_class]
         ce = -(one_hot_q * log_probas).sum(-1)  # [batch, q_shot, num_class]
-        logger.info(
-            f"ce shape: {ce.shape}, one_hot_q shape: {one_hot_q.shape}, "
-            f"log_probas shape: {log_probas.shape}, y_q shape: {y_q.shape}"
-        )
+
         return collect_episode_metrics(
             query_logits=log_probas, query_targets=y_q, phase_name=phase_name,
         )

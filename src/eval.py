@@ -174,7 +174,9 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
         for name, value in episode_metrics.items():
             epoch_metrics[name].append(value)
 
-        tqdm_bar.set_description(f"{pformat(episode_metrics)}")
+        tqdm_bar.set_description(
+            f"accuracy: {episode_metrics['test/accuracy_episode']}"
+        )
 
     # ===============> Compute final metrics <=================
     # =========================================================
