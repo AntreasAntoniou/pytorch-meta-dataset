@@ -72,7 +72,20 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     """
     logger.info(f"==> Running process rank {rank}.")
     setup(args.port, rank, world_size)
-
+    logger.info(f"==> Setting up wandb with args {args}")
+    wandb.init(
+        project=os.environ.get("WANDB_PROJECT"),
+        entity=os.environ.get("WANDB_ENTITY"),
+        config=args,
+        job_type="eval",
+        resume="allow",
+        name=f"{args.test_source}-"
+        f"{args.arch}-"
+        f"{args.val_episodes}-"
+        f"{args.num_ways}-"
+        f"{args.method}-"
+        f"{args.seed}",
+    )
     # ===============> Setup directories for current exp. <=================
     # ======================================================================
     exp_root = Path(os.path.join(args.res_path, args.method))
