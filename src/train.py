@@ -68,7 +68,7 @@ def parse_args() -> argparse.Namespace:
     if args.opts is not None:
         cfg = merge_cfg_from_list(cfg, args.opts)
 
-    logger.info(f"==> Setting up wandb with args {cfg.__dict__}")
+    logger.info(f"==> Setting up wandb with args {cfg}")
     wandb.init(
         project=os.environ.get("WANDB_PROJECT"),
         entity=os.environ.get("WANDB_ENTITY"),
