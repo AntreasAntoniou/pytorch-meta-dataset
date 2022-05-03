@@ -76,7 +76,7 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     wandb.init(
         project=os.environ.get("WANDB_PROJECT"),
         entity=os.environ.get("WANDB_ENTITY"),
-        config=vars(args).__dict__,
+        config=vars(args),
         job_type="eval",
         resume="allow",
         name=f"{args.test_source}-"
