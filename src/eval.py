@@ -15,11 +15,11 @@ from .datasets.loader import get_dataloader
 from .datasets.utils import Split
 from .methods import __dict__ as all_methods
 from .models.ingredient import get_model
-from .train import parse_args
 from .utils import (
     load_checkpoint,
     get_model_dir,
     copy_config,
+    parse_args,
 )
 
 
@@ -180,6 +180,4 @@ def main_worker(args: argparse.Namespace) -> None:
 
 if __name__ == "__main__":
     args = parse_args()
-    os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(x) for x in args.gpus)
-    logger.info(f"Using GPUs: {os.environ['CUDA_VISIBLE_DEVICES']}")
     main_worker(args=args)

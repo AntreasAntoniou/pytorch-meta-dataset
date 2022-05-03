@@ -1,6 +1,7 @@
 import argparse
 import copy
 import json
+import os
 import pickle
 import shutil
 from ast import literal_eval
@@ -17,6 +18,40 @@ from loguru import logger
 from matplotlib.axes import Axes
 from mpl_toolkits.axes_grid1 import ImageGrid
 from torch import Tensor
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Eval")
+    parser.add_argument("--base_config", type=str, required=True, help="config file")
+    parser.add_argument(
+        "--method_config", type=str, default=True, help="Method config file"
+    )
+    parser.add_argument(
+        "--data_config",
+        type=str,
+        default=True,
+        help="Data config file. Mostly to describe episodes.",
+    )
+    parser.add_argument("--opts", default=None, nargs=argparse.REMAINDER)
+
+    args = parser.parse_args()
+    assert args.base_config is not None
+
+    cfg = load_cfg_from_cfg_file(Path(args.base_config))
+    cfg.update(load_cfg_from_cfg_file(Path(args.data_config)))
+    cfg.update(load_cfg_from_cfg_file(Path(args.method_config)))
+
+    if args.opts is not None:
+        cfg = merge_cfg_from_list(cfg, args.opts)
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(x) for x in args.gpus)
+    logger.info(
+        f"Using GPUs with IDs: {os.environ['CUDA_VISIBLE_DEVICES']} \n"
+        f"A total of {torch.cuda.device_count()} GPUs"
+    )
+
+    return cfg
+
 
 plt.style.use("ggplot")
 

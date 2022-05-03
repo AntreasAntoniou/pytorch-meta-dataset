@@ -1,22 +1,16 @@
 import argparse
 import os
 import random
-import time
 from functools import partial
 from pathlib import Path
-from pprint import pformat
 from typing import Dict, Tuple
 
 import numpy as np
 import torch
-import torch.backends.cudnn as cudnn
-import torch.distributed as dist
-import torch.multiprocessing as tmp
-import torch.nn as nn
 import torch.utils.data
 from loguru import logger
 from torch import tensor, Tensor
-from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.backends import cudnn
 from tqdm import tqdm
 
 from .datasets.loader import get_dataloader
@@ -25,7 +19,6 @@ from .losses import __losses__
 from .methods import FewShotMethod
 from .methods import __dict__ as all_methods
 from .models.ingredient import get_model
-from .models.meta.metamodules.module import MetaModule
 from .optim import get_optimizer, get_scheduler
 from .utils import (
     AverageMeter,
@@ -35,34 +28,8 @@ from .utils import (
     merge_cfg_from_list,
     copy_config,
     make_episode_visualization,
+    parse_args,
 )
-
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Eval")
-    parser.add_argument("--base_config", type=str, required=True, help="config file")
-    parser.add_argument(
-        "--method_config", type=str, default=True, help="Method config file"
-    )
-    parser.add_argument(
-        "--data_config",
-        type=str,
-        default=True,
-        help="Data config file. Mostly to describe episodes.",
-    )
-    parser.add_argument("--opts", default=None, nargs=argparse.REMAINDER)
-
-    args = parser.parse_args()
-    assert args.base_config is not None
-
-    cfg = load_cfg_from_cfg_file(Path(args.base_config))
-    cfg.update(load_cfg_from_cfg_file(Path(args.data_config)))
-    cfg.update(load_cfg_from_cfg_file(Path(args.method_config)))
-
-    if args.opts is not None:
-        cfg = merge_cfg_from_list(cfg, args.opts)
-
-    return cfg
 
 
 def meta_val(
@@ -72,7 +39,9 @@ def meta_val(
     val_loader: torch.utils.data.DataLoader,
 ) -> Tuple[Tensor, Tensor]:
     # Device
-    device = "cpu" if not torch.cuda.is_available() else dist.get_rank()
+    device = (
+        torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda")
+    )
     model.eval()
     method.eval()
 
@@ -228,9 +197,6 @@ def main_worker(args: argparse.Namespace) -> None:
         # ============ Validation ============
         if i % args.eval_freq == 0:
             val_acc, n_episodes = eval_fn()
-            if args.distributed:
-                dist.all_reduce(val_acc)
-                dist.all_reduce(n_episodes)
 
             val_acc /= n_episodes
             is_best = val_acc > best_val_acc1
@@ -251,50 +217,10 @@ def main_worker(args: argparse.Namespace) -> None:
                 if "val" in k:
                     metrics[k][int(i / args.eval_freq)] = eval(k)
 
-            for k, e in metrics.items():
-                path = os.path.join(exp_dir, f"{k}.npy")
-                np.save(path, e.cpu().numpy())
-
-        # ============ logger.info / log metrics ============
-
-        if i % args.print_freq == 0:
-            logger.info(
-                "Iteration: [{0}/{1}]\t"
-                "Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t"
-                "Loss {loss.val:.4f} ({loss.avg:.4f})\t"
-                "Training accuracy {train_acc.val:.3f} ({train_acc.avg:.3f})\t".format(
-                    i,
-                    args.num_updates,
-                    batch_time=batch_time,  # noqa: E121
-                    loss=losses,
-                    train_acc=train_acc,
-                )
-            )
-
-            train_loss = losses.avg
-            for k in metrics:
-                if "train" in k:
-                    metrics[k][int(i / args.print_freq)] = eval(k)
-
-        # ============ logger.info / log metrics ============
-        if args.debug and i % args.visu_freq == 0 and args.episodic_training:
-            visu_path = os.path.join(exp_dir, "episode_samples", args.loader_version)
-            os.makedirs(visu_path, exist_ok=True)
-            path = os.path.join(visu_path, f"visu_{i}.png")
-            make_episode_visualization(
-                args,
-                support[0].cpu().numpy(),
-                query[0].cpu().numpy(),
-                support_labels[0].cpu().numpy(),
-                target[0].cpu().numpy(),
-                soft_preds[0].cpu().numpy(),
-                path,
-            )
-
 
 if __name__ == "__main__":
     args = parse_args()
-    # os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(str(x) for x in args.gpus)
+    os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(x) for x in args.gpus)
     if args.debug:
         args.batch_size = 16 if not args.episodic_training else 1
         args.val_episodes = 10
@@ -302,9 +228,5 @@ if __name__ == "__main__":
     distributed = world_size > 1
     args.world_size = world_size
     args.distributed = distributed
-    if torch.cuda.is_available():
-        args.port = find_free_port()
-        tmp.spawn(main_worker, args=(world_size, args), nprocs=world_size, join=True)
-    else:
-        device = "cpu"
-        main_worker(device, world_size, args)
+
+    main_worker(args)
