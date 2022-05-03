@@ -103,11 +103,19 @@ class FinetuneWithInstanceNorm(FSmethod):
 
         # Initialize classifier
         with torch.no_grad():
+            print(f"Shape of support: {support.shape}, query: {query.shape}")
             input_instance_norm = nn.InstanceNorm2d(
-                support.shape[1], affine=True, track_running_stats=True
+                support.shape[2], affine=True, track_running_stats=True
             )
-            support_norm = input_instance_norm(support)
-            query_norm = input_instance_norm(query)
+
+            support_norm = input_instance_norm(
+                support.view(-1, **support.shape[2:])
+            ).view(support.shape)
+
+            query_norm = input_instance_norm(query.view(-1, **query.shape[2:])).view(
+                query.shape
+            )
+
             feat_s, feat_q = extract_features(
                 self.extract_batch_size, support_norm, query_norm, model
             )
@@ -153,16 +161,21 @@ class FinetuneWithInstanceNorm(FSmethod):
 
         # Run adaptation
         for i in range(1, self.iter):
-            if self.finetune_all_layers:
-                model.train()
-                support_norm = input_instance_norm(support)
-                query_norm = input_instance_norm(query)
-                feat_s, feat_q = extract_features(
-                    self.extract_batch_size, support_norm, query_norm, model
-                )
-                if self.cosine_head:
-                    feat_s = F.normalize(feat_s, dim=-1)
-                    feat_q = F.normalize(feat_q, dim=-1)
+            model.train()
+
+            support_norm = input_instance_norm(
+                support.view(-1, **support.shape[2:])
+            ).view(support.shape)
+
+            query_norm = input_instance_norm(query.view(-1, **query.shape[2:])).view(
+                query.shape
+            )
+            feat_s, feat_q = extract_features(
+                self.extract_batch_size, support_norm, query_norm, model
+            )
+            if self.cosine_head:
+                feat_s = F.normalize(feat_s, dim=-1)
+                feat_q = F.normalize(feat_q, dim=-1)
 
             logits_s = self.temp * classifier(feat_s[0])
             probs_s = logits_s.softmax(-1)
