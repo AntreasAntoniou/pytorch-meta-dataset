@@ -22,7 +22,7 @@ from tqdm import tqdm
 from .datasets.loader import get_dataloader
 from .datasets.utils import Split
 from .losses import __losses__
-from .methods import FSmethod
+from .methods import FewShotMethod
 from .methods import __dict__ as all_methods
 from .models.ingredient import get_model
 from .models.meta.metamodules.module import MetaModule
@@ -68,7 +68,7 @@ def parse_args() -> argparse.Namespace:
 def meta_val(
     args: argparse.Namespace,
     model: torch.nn.Module,
-    method: FSmethod,
+    method: FewShotMethod,
     val_loader: torch.utils.data.DataLoader,
 ) -> Tuple[Tensor, Tensor]:
     # Device

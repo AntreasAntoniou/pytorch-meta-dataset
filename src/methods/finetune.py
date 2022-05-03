@@ -7,11 +7,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
-from .method import FSmethod, collect_episode_per_step_metrics, collect_episode_metrics
+from .method import (
+    FewShotMethod,
+    collect_episode_per_step_metrics,
+    collect_episode_metrics,
+)
 from .utils import get_one_hot, extract_features
 
 
-class Finetune(FSmethod):
+class Finetune(FewShotMethod):
     """
     Implementation of Finetune (or Baseline method) (ICLR 2019) https://arxiv.org/abs/1904.04232
     """
@@ -114,6 +118,7 @@ class Finetune(FSmethod):
             query_targets=y_q,
             phase_name=phase_name,
             task_idx=task_ids[0],
+            step_idx=0,
         )
         # Define optimizer
         if self.finetune_all_layers:
@@ -125,7 +130,7 @@ class Finetune(FSmethod):
         )
 
         # Run adaptation
-        for _ in range(1, self.iter):
+        for step_idx in range(1, self.iter):
             if self.finetune_all_layers:
                 model.train()
                 feat_s, feat_q = extract_features(
@@ -153,8 +158,12 @@ class Finetune(FSmethod):
                     query_targets=y_q,
                     phase_name=phase_name,
                     task_idx=task_ids[0],
+                    step_idx=step_idx,
                 )
 
         return collect_episode_metrics(
-            query_logits=logits_q, query_targets=y_q, phase_name=phase_name,
+            query_logits=logits_q,
+            query_targets=y_q,
+            phase_name=phase_name,
+            step_idx=task_ids[0],
         )

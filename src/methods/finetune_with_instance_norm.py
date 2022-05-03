@@ -6,11 +6,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
-from .method import FSmethod, collect_episode_per_step_metrics, collect_episode_metrics
+from .method import (
+    FewShotMethod,
+    collect_episode_per_step_metrics,
+    collect_episode_metrics,
+)
 from .utils import get_one_hot, extract_features
 
 
-class FinetuneWithInstanceNorm(FSmethod):
+class FinetuneWithInstanceNorm(FewShotMethod):
     """
     Implementation of Finetune (or Baseline method) (ICLR 2019) https://arxiv.org/abs/1904.04232
     """
@@ -140,6 +144,7 @@ class FinetuneWithInstanceNorm(FSmethod):
                 query_targets=y_q,
                 phase_name=phase_name,
                 task_idx=task_ids[0],
+                step=0,
             )
 
         # Define optimizer
@@ -158,7 +163,7 @@ class FinetuneWithInstanceNorm(FSmethod):
         )
 
         # Run adaptation
-        for _ in range(1, self.iter):
+        for step_idx in range(1, self.iter):
             model.train()
 
             support_norm = input_instance_norm(
@@ -199,8 +204,12 @@ class FinetuneWithInstanceNorm(FSmethod):
                     query_targets=y_q,
                     phase_name=phase_name,
                     task_idx=task_ids[0],
+                    step_idx=step_idx,
                 )
 
         return collect_episode_metrics(
-            query_logits=logits_q, query_targets=y_q, phase_name=phase_name
+            query_logits=logits_q,
+            query_targets=y_q,
+            phase_name=phase_name,
+            step_idx=task_ids[0],
         )

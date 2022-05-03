@@ -6,13 +6,13 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 
-from .method import FSmethod
+from .method import FewShotMethod
 from .utils import get_one_hot
 from ..metrics import Metric
 from ..models.meta.metamodules import MetaModule
 
 
-class MAML(FSmethod):
+class MAML(FewShotMethod):
     """
     Implementation of MAML (ICML 2017) https://arxiv.org/abs/1703.03400.
     Inspired by https://github.com/tristandeleu/pytorch-meta/tree/master/examples/maml

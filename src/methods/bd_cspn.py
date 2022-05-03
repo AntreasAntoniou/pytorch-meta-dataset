@@ -6,12 +6,12 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 
-from .method import FSmethod
+from .method import FewShotMethod
 from .utils import get_one_hot, extract_features, compute_centroids
 from ..metrics import Metric
 
 
-class BDCSPN(FSmethod):
+class BDCSPN(FewShotMethod):
 
     """
     Implementation of BD-CSPN (ECCV 2020) https://arxiv.org/abs/1911.10713

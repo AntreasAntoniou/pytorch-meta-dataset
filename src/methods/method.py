@@ -10,7 +10,7 @@ from torch import Tensor
 from ..metrics.lamba_metrics import accuracy, cross_entropy_loss
 
 
-def collect_episode_metrics(query_logits, query_targets, phase_name):
+def collect_episode_metrics(query_logits, query_targets, phase_name, step_idx):
     query_logits = query_logits.view(-1, query_logits.shape[-1])
     query_targets = query_targets.view(-1)
 
@@ -24,13 +24,19 @@ def collect_episode_metrics(query_logits, query_targets, phase_name):
         query_logits, query_targets
     )
 
-    wandb.log(episode_metrics)
+    wandb.log(episode_metrics, step=step_idx)
 
     return episode_metrics
 
 
 def collect_episode_per_step_metrics(
-    support_logits, support_targets, query_logits, query_targets, phase_name, task_idx,
+    support_logits,
+    support_targets,
+    query_logits,
+    query_targets,
+    phase_name,
+    task_idx,
+    step_idx,
 ):
     support_logits = support_logits.view(-1, support_logits.shape[-1])
     support_targets = support_targets.view(-1)
@@ -55,10 +61,10 @@ def collect_episode_per_step_metrics(
         f"{phase_name}/task_idx={task_idx}/query_cross_entropy_loss_step"
     ] = cross_entropy_loss(query_logits, query_targets)
 
-    wandb.log(step_metrics)
+    wandb.log(step_metrics, step=step_idx)
 
 
-class FSmethod(nn.Module):
+class FewShotMethod(nn.Module):
     """
     Abstract class for few-shot methods
     """
@@ -66,7 +72,7 @@ class FSmethod(nn.Module):
     def __init__(
         self, args: argparse.Namespace, logger: Optional[object] = None
     ) -> None:
-        super(FSmethod, self).__init__()
+        super(FewShotMethod, self).__init__()
 
     def forward(
         self,

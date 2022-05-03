@@ -7,11 +7,11 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 
-from .method import FSmethod, collect_episode_metrics
+from .method import FewShotMethod, collect_episode_metrics
 from .utils import extract_features, compute_centroids
 
 
-class SimpleShot(FSmethod):
+class SimpleShot(FewShotMethod):
     """
     Implementation of SimpleShot method https://arxiv.org/abs/1911.04623
     """
@@ -76,5 +76,8 @@ class SimpleShot(FSmethod):
         logits_q = self.get_logits(feat_q)
 
         return collect_episode_metrics(
-            query_logits=logits_q, query_targets=y_q, phase_name=phase_name,
+            query_logits=logits_q,
+            query_targets=y_q,
+            phase_name=phase_name,
+            step_idx=task_ids[0],
         )

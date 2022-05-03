@@ -6,11 +6,11 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor
 
-from .method import FSmethod, collect_episode_metrics
+from .method import FewShotMethod, collect_episode_metrics
 from .utils import get_one_hot, extract_features, compute_centroids
 
 
-class TIM(FSmethod):
+class TIM(FewShotMethod):
     """Implementation of TIM method (NeurIPS 2020) https://arxiv.org/abs/2008.11297"""
 
     def __init__(self, args: argparse.Namespace):
@@ -124,7 +124,10 @@ class TIM_GD(TIM):
             optimizer.step()
 
         return collect_episode_metrics(
-            query_logits=logits_q, query_targets=y_q, phase_name=phase_name,
+            query_logits=logits_q,
+            query_targets=y_q,
+            phase_name=phase_name,
+            step_idx=task_ids[0],
         )
 
 
@@ -241,5 +244,8 @@ class TIM_ADM(TIM):
             P_q = logits_q.softmax(2)
 
         return collect_episode_metrics(
-            query_logits=logits_q, query_targets=y_q, phase_name=phase_name,
+            query_logits=logits_q,
+            query_targets=y_q,
+            phase_name=phase_name,
+            step_idx=task_ids[0],
         )
