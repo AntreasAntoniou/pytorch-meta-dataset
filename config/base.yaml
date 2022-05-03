@@ -30,7 +30,7 @@ OPTIM:
 
 DATA:
      # Data config
-    image_size: 126
+    image_size: 84
     base_source: 'ilsvrc_2012'
     val_source: 'ilsvrc_2012'
     test_source: 'ilsvrc_2012'
@@ -85,4 +85,4 @@ METHOD:
     episodic_training: False
 
 DISTRIBUTED:
-    gpus: [0, 1]
+    gpus: [0, 1, 2, 3, 4, 5, 6, 7]
