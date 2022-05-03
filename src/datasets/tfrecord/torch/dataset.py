@@ -1,13 +1,12 @@
 """Load tfrecord files into torch datasets."""
 
 import typing
-import numpy as np
 
+import numpy as np
 import torch.utils.data
 
-from .. import reader
 from .. import iterator_utils
-import warnings
+from .. import reader
 
 
 class TFRecordDataset(torch.utils.data.IterableDataset):

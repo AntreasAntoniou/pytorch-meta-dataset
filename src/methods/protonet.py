@@ -1,12 +1,11 @@
 import argparse
-from typing import Dict, Optional, Tuple
+from typing import Tuple
 
 import torch
 from torch import Tensor
-from loguru import logger
+
+from .method import FSmethod, collect_episode_metrics
 from .utils import get_one_hot, compute_centroids, extract_features
-from .method import FSmethod, collect_episode_per_step_metrics, collect_episode_metrics
-from ..metrics import Metric
 
 
 class ProtoNet(FSmethod):

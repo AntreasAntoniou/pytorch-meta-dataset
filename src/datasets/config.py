@@ -1,7 +1,8 @@
 import argparse
-from typing import Tuple
-from pathlib import Path
 import os
+from pathlib import Path
+from typing import Tuple
+
 from src.models.standard import model_configs
 
 

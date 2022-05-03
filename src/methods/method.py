@@ -1,13 +1,11 @@
 import argparse
 from collections import defaultdict
-from typing import Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
-from torch import Tensor
-
-from ..metrics import Metric
 import wandb
+from torch import Tensor
 
 from ..metrics.lamba_metrics import accuracy, cross_entropy_loss
 

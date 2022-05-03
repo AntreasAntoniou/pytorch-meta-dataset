@@ -1,15 +1,15 @@
 import argparse
-from typing import Dict, Tuple, Optional
 from collections import OrderedDict
+from typing import Dict, Tuple, Optional
 
 import torch
 import torch.nn.functional as F
 from torch import Tensor
 
 from .method import FSmethod
-from ..models.meta.metamodules import MetaModule
 from .utils import get_one_hot
 from ..metrics import Metric
+from ..models.meta.metamodules import MetaModule
 
 
 class MAML(FSmethod):

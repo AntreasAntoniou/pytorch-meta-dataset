@@ -1,6 +1,7 @@
 import torch
-from src.models.standard.tali import TALIMP, default_cfgs
 from rich import print
+
+from src.models.standard.tali import TALIMP, default_cfgs
 
 model = TALIMP(**default_cfgs["modus_prime_tali_viat_pretrained"])
 x_image = torch.randn(2, 3, 288, 176)

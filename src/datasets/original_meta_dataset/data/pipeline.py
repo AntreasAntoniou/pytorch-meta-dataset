@@ -31,17 +31,17 @@ from __future__ import print_function
 
 import functools
 
-from absl import logging
 import gin.tf
-from .. import data
-from . import decoder
-from . import learning_spec
-from . import reader
-from . import sampling
+import tensorflow.compat.v1 as tf
+from absl import logging
 
 # from simclr import data_util
 from six.moves import zip
-import tensorflow.compat.v1 as tf
+
+from . import decoder
+from . import reader
+from . import sampling
+from .. import data
 
 tf.flags.DEFINE_float(
     "color_jitter_strength", 1.0, "The strength of color jittering for SimCLR episodes."
@@ -326,9 +326,9 @@ def process_episode(
         log_data_augmentation(query_decoder.data_augmentation, "query")
         query_decoder.image_size = image_size
 
-    (support_strings, support_class_ids), (
-        query_strings,
-        query_class_ids,
+    (
+        (support_strings, support_class_ids),
+        (query_strings, query_class_ids,),
     ) = flush_and_chunk_episode(example_strings, class_ids, chunk_sizes)
 
     support_images = support_strings
@@ -563,11 +563,14 @@ def make_multisource_episode_pipeline(
         num_to_take = [-1] * len(dataset_spec_list)
     num_unique_descriptions = episode_descr_config.num_unique_descriptions
     sources = []
-    for source_id, (
-        dataset_spec,
-        use_dag_ontology,
-        use_bilevel_ontology,
-        num_to_take_for_dataset,
+    for (
+        source_id,
+        (
+            dataset_spec,
+            use_dag_ontology,
+            use_bilevel_ontology,
+            num_to_take_for_dataset,
+        ),
     ) in enumerate(
         zip(
             dataset_spec_list,

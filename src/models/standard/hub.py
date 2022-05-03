@@ -1,11 +1,11 @@
 import json
-from loguru import logger
 import os
 from functools import partial
 from pathlib import Path
 from typing import Union
 
 import torch
+from loguru import logger
 from torch.hub import HASH_REGEX, download_url_to_file, urlparse
 
 try:

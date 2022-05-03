@@ -1,23 +1,22 @@
 from typing import List, Union
 
+import cv2
+import numpy as np
 import torch
 import torchvision
-import numpy as np
-import cv2
 from PIL import Image
 from torch.utils.data import Dataset
-from loguru import logger
 
 from . import reader
 from . import sampling
-from .utils import Split
-from .transform import get_transforms
+from .config import EpisodeDescriptionConfig, DataConfig
+from .dataset_spec import BiLevelDatasetSpecification as BDS
+from .dataset_spec import DatasetSpecification as DS
+from .dataset_spec import HierarchicalDatasetSpecification as HDS
 from .sampling import EpisodeDescriptionSampler
 from .tfrecord.torch.dataset import TFRecordDataset
-from .config import EpisodeDescriptionConfig, DataConfig
-from .dataset_spec import DatasetSpecification as DS
-from .dataset_spec import BiLevelDatasetSpecification as BDS
-from .dataset_spec import HierarchicalDatasetSpecification as HDS
+from .transform import get_transforms
+from .utils import Split
 
 
 class EpisodicDataset(torch.utils.data.IterableDataset):

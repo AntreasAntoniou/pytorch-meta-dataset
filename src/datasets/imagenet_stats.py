@@ -18,8 +18,8 @@
 
 import collections
 
-from absl import logging
 import numpy as np
+from absl import logging
 
 
 def log_graph_stats(

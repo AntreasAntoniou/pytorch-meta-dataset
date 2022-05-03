@@ -1,12 +1,13 @@
-import pandas as pd
-from markdownTable import markdownTable
-from loguru import logger
-import argparse
-from pathlib import Path
 from collections import defaultdict
-import numpy as np
 from functools import partial
+from pathlib import Path
 from typing import Dict, List, Any
+
+import numpy as np
+import pandas as pd
+from loguru import logger
+from markdownTable import markdownTable
+
 
 # file = 'sample.csv'
 # df = pd.read_csv(file)

@@ -1,37 +1,24 @@
+import argparse
 import os
 import random
-import argparse
 from collections import defaultdict
 from pathlib import Path
-from pprint import pformat
 
-import torch
 import numpy as np
-import pandas as pd
-import torch.nn as nn
-import torch.multiprocessing as mp
+import torch
 import torch.backends.cudnn as cudnn
 import wandb
-from dotted_dict import DottedDict
-from tqdm import trange
 from loguru import logger
-from torch.nn.parallel import DistributedDataParallel as DDP
+from tqdm import trange
 
-from .datasets.utils import Split
 from .datasets.loader import get_dataloader
+from .datasets.utils import Split
 from .methods import __dict__ as all_methods
-from .metrics import __dict__ as all_metrics
 from .models.ingredient import get_model
-from .models.meta.metamodules.module import MetaModule
 from .train import parse_args
-from .utils import make_episode_visualization, plot_metrics
 from .utils import (
-    compute_confidence_interval,
     load_checkpoint,
     get_model_dir,
-    find_free_port,
-    setup,
-    cleanup,
     copy_config,
 )
 
@@ -194,8 +181,4 @@ if __name__ == "__main__":
     args = parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(x) for x in args.gpus)
 
-    # world_size = len(args.gpus)
-    # distributed = world_size > 1
-    # args.distributed = distributed
-    # args.port = find_free_port()
     main_worker(args=args)

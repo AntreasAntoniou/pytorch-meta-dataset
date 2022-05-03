@@ -33,10 +33,11 @@ import functools
 import itertools
 import os
 
-from .. import data
 import numpy as np
-from six.moves import range
 import tensorflow.compat.v1 as tf
+from six.moves import range
+
+from .. import data
 
 # PLACEHOLDER_CLASS_ID will be used as the target of placeholder examples, that
 # are used for padding only.

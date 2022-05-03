@@ -20,17 +20,17 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from absl.testing import parameterized
 import gin.tf
+import numpy as np
+import tensorflow.compat.v1 as tf
+from absl.testing import parameterized
 from meta_dataset.data import config
 from meta_dataset.data import sampling
 from meta_dataset.data import test_utils
 from meta_dataset.data.dataset_spec import DatasetSpecification
 from meta_dataset.data.learning_spec import Split
-import numpy as np
 from six.moves import range
 from six.moves import zip
-import tensorflow.compat.v1 as tf
 
 
 class SampleNumWaysUniformlyTest(tf.test.TestCase):

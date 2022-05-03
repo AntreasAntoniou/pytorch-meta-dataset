@@ -1,24 +1,22 @@
-import yaml
+import argparse
 import copy
+import json
 import pickle
 import shutil
-import argparse
-import json
-from os import environ
-from pathlib import Path
 from ast import literal_eval
+from pathlib import Path
 from typing import Any, List, Tuple, Union, cast
 
-import torch
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
+import torch.nn as nn
 import torch.nn.functional as F
-import torch.distributed as dist
-from torch import Tensor
+import yaml
+from loguru import logger
 from matplotlib.axes import Axes
 from mpl_toolkits.axes_grid1 import ImageGrid
-from loguru import logger
-import torch.nn as nn
+from torch import Tensor
 
 plt.style.use("ggplot")
 
@@ -271,14 +269,13 @@ def rand_bbox(size: torch.Size, lam: float):
 def get_model_dir(args: argparse.Namespace) -> Path:
 
     model_type = args.method if args.episodic_training else "standard"
-    path = Path(
+    return Path(
         args.ckpt_path,
         f"base={args.base_source}",
         f"val={args.val_source}",
         f"arch={args.arch}",
         f"method={model_type}",
     )
-    return path
 
 
 def get_logs_path(model_path: Path, method: str, shot: int) -> Path:

@@ -1,8 +1,8 @@
 from argparse import Namespace
 
-import torch
 import numpy as np
 import seaborn as sn
+import torch
 from matplotlib.axes import Axes
 
 from ..utils import compute_confidence_interval, get_one_hot
@@ -155,11 +155,11 @@ class MaxEigS(ScalarMetric):
         diff_s = z.unsqueeze(2) - weights.unsqueeze(1).detach()  # [n_task, shot, K, d]
         # assert diff_s.size() == (n_tasks, shot, K, d), (diff_s.size(), (n_tasks, shot, K, d))
 
-        H = (diff_s**2).sum(-1)  # [n_task, shot, K]
+        H = (diff_s ** 2).sum(-1)  # [n_task, shot, K]
         I = torch.ones_like(H)  # [n_task, shot, K]
         p = probs_q.detach()  # [n_task, shot, K]
 
-        hessian = p * (H - I) - (p**2) * H  # [n_task, shot, K]
+        hessian = p * (H - I) - (p ** 2) * H  # [n_task, shot, K]
         hessian = hessian.sum(1)  # [n_task, K]
         max_ = hessian.max(1).values
 
@@ -178,11 +178,11 @@ class MaxEigQ(ScalarMetric):
         n_tasks, shot, d = z.size()
         diff_s = z.unsqueeze(2) - weights.unsqueeze(1).detach()  # [n_task, shot, K, d]
         # assert diff_s.size() == (n_tasks, shot, K, d), (diff_s.size(), (n_tasks, shot, K, d))
-        H = (diff_s**2).sum(-1)  # [n_task, shot, K]
+        H = (diff_s ** 2).sum(-1)  # [n_task, shot, K]
         I = torch.ones_like(H)  # [n_task, shot, K]
         p = probs_q.detach()  # [n_task, shot, K]
 
-        hessian = p * (H - I) - (p**2) * H  # [n_task, shot, K]
+        hessian = p * (H - I) - (p ** 2) * H  # [n_task, shot, K]
         hessian = hessian.sum(1)  # [n_task, K]
         max_ = hessian.max(1).values
         return max_

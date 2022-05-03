@@ -23,25 +23,23 @@ for some einops/einsum fun
 Hacked together by / Copyright 2020, Ross Wightman
 """
 import math
-
-from gate.base.utils.model_utils import resize_custom
-from loguru import logger
-from functools import partial
 from collections import OrderedDict
-from copy import deepcopy
+from functools import partial
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from gate.base.utils.model_utils import resize_custom
+from loguru import logger
 from timm.data import (
     IMAGENET_DEFAULT_MEAN,
     IMAGENET_DEFAULT_STD,
     IMAGENET_INCEPTION_MEAN,
     IMAGENET_INCEPTION_STD,
 )
-from .helpers import build_model_with_cfg, named_apply, adapt_input_conv
 from timm.models.layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_normal_
+
+from .helpers import build_model_with_cfg, named_apply, adapt_input_conv
 
 
 def _cfg(url="", **kwargs):
@@ -284,7 +282,7 @@ class Attention(nn.Module):
         assert dim % num_heads == 0, "dim should be divisible by num_heads"
         self.num_heads = num_heads
         head_dim = dim // num_heads
-        self.scale = head_dim**-0.5
+        self.scale = head_dim ** -0.5
 
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)

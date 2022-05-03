@@ -3,7 +3,6 @@ from typing import List
 
 import torch
 import torch.nn as nn
-import torch.distributed as dist
 from torch import Tensor
 
 

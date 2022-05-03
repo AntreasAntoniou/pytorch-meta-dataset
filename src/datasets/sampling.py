@@ -1,14 +1,16 @@
-from absl import logging
 from typing import Union, List, Tuple
+
 import numpy as np
-from numpy.random import RandomState
+from absl import logging
 from loguru import logger
+from numpy.random import RandomState
+
 from . import dataset_spec as dataset_spec_lib
 from . import imagenet_specification
 from .config import EpisodeDescriptionConfig
-from .dataset_spec import HierarchicalDatasetSpecification as HDS
 from .dataset_spec import BiLevelDatasetSpecification as BDS
 from .dataset_spec import DatasetSpecification as DS
+from .dataset_spec import HierarchicalDatasetSpecification as HDS
 from .utils import Split
 
 # How the value of MAX_SPANNING_LEAVES_ELIGIBLE was selected.
@@ -464,11 +466,9 @@ class EpisodeDescriptionSampler(object):
             episode_superclass = random_gen.choice(self.superclass_set, 1)[
                 0
             ]  # noqa: E111
-            num_superclass_classes = (
-                self.dataset_spec.classes_per_superclass[  # noqa: E111
-                    episode_superclass
-                ]
-            )
+            num_superclass_classes = self.dataset_spec.classes_per_superclass[  # noqa: E111
+                episode_superclass
+            ]
 
             num_ways = sample_num_ways_uniformly(  # noqa: E111
                 num_superclass_classes,

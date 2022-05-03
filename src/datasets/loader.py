@@ -1,21 +1,19 @@
 import argparse
-from pathlib import Path
 from functools import partial
+from pathlib import Path
 from pprint import pprint
 from typing import Any, Callable, Iterable, Tuple, Union, cast
 
-import torch
 import numpy as np
+import torch
 from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
-from loguru import logger
 
-from .utils import Split
-from .pipeline import worker_init_fn_
 from . import config as config_lib
-from . import pipeline as torch_pipeline
 from . import dataset_spec as dataset_spec_lib
-
+from . import pipeline as torch_pipeline
+from .pipeline import worker_init_fn_
+from .utils import Split
 
 DL = Union[DataLoader, Iterable[Tuple[Tensor, ...]]]
 

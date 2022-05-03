@@ -1,5 +1,5 @@
-import time
 import argparse
+import time
 from typing import Dict, Optional, Tuple
 
 import torch
@@ -7,8 +7,8 @@ import torch.nn.functional as F
 from torch import Tensor
 
 from .method import FSmethod
-from ..metrics import Metric
 from .utils import get_one_hot, extract_features, compute_centroids
+from ..metrics import Metric
 
 
 class BDCSPN(FSmethod):

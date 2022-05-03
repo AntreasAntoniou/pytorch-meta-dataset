@@ -31,11 +31,12 @@ from __future__ import print_function
 import json
 import os
 
-from absl import logging
-from . import imagenet_stats
 import numpy as np
 import six
 import tensorflow.compat.v1 as tf
+from absl import logging
+
+from . import imagenet_stats
 
 tf.flags.DEFINE_string(
     "ilsvrc_2012_data_root", "", "Path to the root of the ImageNet data."

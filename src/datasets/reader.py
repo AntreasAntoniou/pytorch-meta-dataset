@@ -1,12 +1,13 @@
 import os
-from tqdm import tqdm
 from typing import Union
 
-from .utils import Split
-from .tfrecord.torch.dataset import TFRecordDataset
-from .dataset_spec import DatasetSpecification as DS
+from tqdm import tqdm
+
 from .dataset_spec import BiLevelDatasetSpecification as BDS
+from .dataset_spec import DatasetSpecification as DS
 from .dataset_spec import HierarchicalDatasetSpecification as HDS
+from .tfrecord.torch.dataset import TFRecordDataset
+from .utils import Split
 
 
 class Reader(object):

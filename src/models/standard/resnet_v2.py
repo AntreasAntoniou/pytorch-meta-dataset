@@ -25,13 +25,11 @@ Original copyright of Google code below, modifications by Ross Wightman, Copyrig
 # limitations under the License.
 
 from collections import OrderedDict  # pylint: disable=g-importing-member
-from loguru import logger
-import torch
-import torch.nn as nn
 from functools import partial
 
+import torch
+import torch.nn as nn
 from timm.data import IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD
-from .helpers import build_model_with_cfg
 from timm.models.layers import (
     GroupNormAct,
     ClassifierHead,
@@ -40,6 +38,8 @@ from timm.models.layers import (
     create_pool2d,
     StdConv2d,
 )
+
+from .helpers import build_model_with_cfg
 
 
 def _cfg(url="", **kwargs):

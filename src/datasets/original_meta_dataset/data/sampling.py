@@ -29,11 +29,12 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import numpy as np
 from absl import logging
+from six.moves import zip
+
 from . import dataset_spec as dataset_spec_lib
 from . import imagenet_specification
-import numpy as np
-from six.moves import zip
 
 # Module-level random number generator. Initialized randomly, can be seeded.
 RNG = np.random.RandomState(seed=None)

@@ -1,7 +1,9 @@
-from .standard import __dict__ as standard_dict
-from .meta import __dict__ as meta_dict
-from loguru import logger
 import argparse
+
+from loguru import logger
+
+from .meta import __dict__ as meta_dict
+from .standard import __dict__ as standard_dict
 
 
 def get_model(args: argparse.Namespace, num_classes: int):

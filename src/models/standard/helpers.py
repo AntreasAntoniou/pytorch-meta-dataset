@@ -1,21 +1,21 @@
 """ Model creation / weight loading / state_dict helpers
 Hacked together by / Copyright 2020 Ross Wightman
 """
-from loguru import logger
-import os
 import math
+import os
 from collections import OrderedDict
 from copy import deepcopy
 from typing import Any, Callable, Optional, Tuple
 
 import torch
 import torch.nn as nn
+from loguru import logger
+from timm.models.features import FeatureListNet, FeatureHookNet
+from timm.models.fx_features import FeatureGraphNet
+from timm.models.layers import Conv2dSame, Linear
 from torch.hub import load_state_dict_from_url
 
-from timm.models.features import FeatureListNet, FeatureDictNet, FeatureHookNet
-from timm.models.fx_features import FeatureGraphNet
 from .hub import has_hf_hub, download_cached_file, load_state_dict_from_hf
-from timm.models.layers import Conv2dSame, Linear
 
 
 def load_state_dict(checkpoint_path, use_ema=False):

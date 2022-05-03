@@ -24,15 +24,15 @@ import collections
 import functools
 
 import gin.tf
+import numpy as np
+import tensorflow.compat.v1 as tf
 from meta_dataset.data import config
 from meta_dataset.data import reader
 from meta_dataset.data import sampling
 from meta_dataset.data.dataset_spec import DatasetSpecification
 from meta_dataset.data.learning_spec import Split
-import numpy as np
 from six.moves import range
 from six.moves import zip
-import tensorflow.compat.v1 as tf
 
 # DatasetSpecification to use in tests
 DATASET_SPEC = DatasetSpecification(

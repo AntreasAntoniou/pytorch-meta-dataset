@@ -20,11 +20,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import numpy as np
+import tensorflow.compat.v1 as tf
 from meta_dataset.data import imagenet_specification as imagenet_spec
 from meta_dataset.data import learning_spec
-import numpy as np
 from six.moves import range
-import tensorflow.compat.v1 as tf
 
 DESIRED_TOY_NUM_VALID_CLASSES = 2
 DESIRED_TOY_NUM_TEST_CLASSES = 1

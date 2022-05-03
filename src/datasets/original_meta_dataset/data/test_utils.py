@@ -21,11 +21,11 @@ from __future__ import division
 from __future__ import print_function
 
 import gin.tf
+import numpy as np
+import tensorflow.compat.v1 as tf
 from meta_dataset.data.dataset_spec import DatasetSpecification
 from meta_dataset.data.learning_spec import Split
 from meta_dataset.dataset_conversion import dataset_to_records
-import numpy as np
-import tensorflow.compat.v1 as tf
 
 # DatasetSpecification to use in tests
 DATASET_SPEC = DatasetSpecification(

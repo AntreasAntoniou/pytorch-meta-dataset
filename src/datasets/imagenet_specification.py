@@ -28,11 +28,12 @@ ImageNet's ontology in particular is described in the article.
 import json
 import os
 
-from loguru import logger
-from . import imagenet_stats
 import numpy as np
 import six
 import tensorflow.compat.v1 as tf
+from loguru import logger
+
+from . import imagenet_stats
 
 FLAGS = tf.flags.FLAGS
 

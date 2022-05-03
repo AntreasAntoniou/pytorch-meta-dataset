@@ -22,8 +22,8 @@ from __future__ import print_function
 
 import collections
 
-from absl import logging
 import numpy as np
+from absl import logging
 from six.moves import range
 
 

@@ -24,16 +24,17 @@ import collections
 import json
 import os
 
-from absl import logging
-from .. import data
-from . import imagenet_specification
-from . import learning_spec
 import numpy as np
 import six
+import tensorflow.compat.v1 as tf
+from absl import logging
 from six.moves import cPickle as pkl
 from six.moves import range
 from six.moves import zip
-import tensorflow.compat.v1 as tf
+
+from . import imagenet_specification
+from . import learning_spec
+from .. import data
 
 
 def get_classes(split, classes_per_split):

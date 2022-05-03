@@ -1,14 +1,12 @@
 import argparse
 from typing import Dict, Optional, Tuple
-from loguru import logger
+
 import torch
-import torch.nn.functional as F
-import torch.distributed as dist
-from torch import Tensor
 import torch.nn as nn
+import torch.nn.functional as F
+from torch import Tensor
 
 from .method import FSmethod, collect_episode_per_step_metrics, collect_episode_metrics
-from ..metrics import Metric
 from .utils import get_one_hot, extract_features
 
 

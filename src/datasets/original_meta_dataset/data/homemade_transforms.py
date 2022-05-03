@@ -18,32 +18,13 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import functools
-import numpy as np
-
-from tensorflow.python.compat import compat
-from tensorflow.python.eager import def_function
-from tensorflow.python.framework import constant_op
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
-from tensorflow.python.framework import random_seed
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.framework import tensor_util
 from tensorflow.python.ops import array_ops
-from tensorflow.python.ops import check_ops
-from tensorflow.python.ops import control_flow_ops
 from tensorflow.python.ops import gen_image_ops
 from tensorflow.python.ops import math_ops
-from tensorflow.python.ops import nn
-from tensorflow.python.ops import nn_ops
-from tensorflow.python.ops import random_ops
-from tensorflow.python.ops import sort_ops
-from tensorflow.python.ops import stateless_random_ops
-from tensorflow.python.ops import string_ops
-from tensorflow.python.ops import variables
-from tensorflow.python.util import deprecation
-from tensorflow.python.util import dispatch
-from tensorflow.python.util.tf_export import tf_export
 
 
 class ResizeMethod(object):

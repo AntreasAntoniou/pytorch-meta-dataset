@@ -1,7 +1,7 @@
-from pathlib import Path
 import sys
-from typing import List, Union
 from os.path import join
+from pathlib import Path
+from typing import List, Union
 
 
 def menu_selection(paths: Union[Path, List[Path]]) -> List[Path]:

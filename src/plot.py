@@ -1,14 +1,15 @@
-from .utils import compute_confidence_interval
-from pathlib import Path
-from itertools import cycle
+import argparse
+import json
 from collections import defaultdict
 from functools import partial
+from itertools import cycle
+from pathlib import Path
 from typing import Any
 
-import json
-import argparse
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
+from .utils import compute_confidence_interval
 
 plt.style.use("ggplot")
 

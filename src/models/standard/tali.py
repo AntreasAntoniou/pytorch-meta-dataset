@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 from dotted_dict import DottedDict
 
@@ -78,9 +77,7 @@ class TALIMP(nn.Module):
 
     def build(self):
         self.linear_layer_dict = nn.ModuleDict(
-            dict(
-                image=nn.Linear(768, self.num_classes, bias=True),
-            )
+            dict(image=nn.Linear(768, self.num_classes, bias=True),)
         )
         self.model.model.system.modality_embeddings["text"] = nn.Identity()
         self.model.model.system.modality_embeddings["video"] = nn.Identity()
@@ -100,8 +97,7 @@ class TALIMP(nn.Module):
 
 
 def modus_prime_tali_viat_pretrained(
-    num_classes: int = 1000,
-    **kwargs,
+    num_classes: int = 1000, **kwargs,
 ):
     """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
@@ -112,8 +108,7 @@ def modus_prime_tali_viat_pretrained(
 
 
 def modus_prime_tali_viat_scratch(
-    num_classes: int = 1000,
-    **kwargs,
+    num_classes: int = 1000, **kwargs,
 ):
     """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K

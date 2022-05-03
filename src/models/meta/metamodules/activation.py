@@ -1,9 +1,10 @@
+from collections import OrderedDict
+
 import torch.nn as nn
 import torch.nn.functional as F
 
-from collections import OrderedDict
-from .module import MetaModule
 from .linear import MetaLinear
+from .module import MetaModule
 
 
 class MetaMultiheadAttention(nn.MultiheadAttention, MetaModule):

@@ -1,6 +1,7 @@
 import torch
-from src.models.standard.clip import CLIPModel, default_cfgs
 from rich import print
+
+from src.models.standard.clip import CLIPModel, default_cfgs
 
 model = CLIPModel(**default_cfgs["ViT-B/16-pretrained"])
 x_image = torch.randn(2, 3, 288, 176)

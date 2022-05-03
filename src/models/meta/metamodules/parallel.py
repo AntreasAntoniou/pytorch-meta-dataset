@@ -1,13 +1,12 @@
-import torch
 import warnings
-
-from torch.nn import DataParallel as DataParallel_
-from .module import MetaModule
 from collections import OrderedDict
 
-from torch.nn.parallel import parallel_apply
-from torch.nn.parallel.scatter_gather import scatter_kwargs
+import torch
+from torch.nn import DataParallel as DataParallel_
 from torch.nn.parallel.replicate import _broadcast_coalesced_reshape
+from torch.nn.parallel.scatter_gather import scatter_kwargs
+
+from .module import MetaModule
 
 
 class DataParallel(DataParallel_, MetaModule):

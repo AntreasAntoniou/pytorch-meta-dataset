@@ -1,33 +1,32 @@
-import os
-import time
-import random
 import argparse
+import os
+import random
+import time
 from functools import partial
+from pathlib import Path
 from pprint import pformat
 from typing import Dict, Tuple
 
-import torch
 import numpy as np
-import torch.nn as nn
-import torch.utils.data
+import torch
+import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 import torch.multiprocessing as tmp
-import torch.backends.cudnn as cudnn
-import wandb
-
+import torch.nn as nn
+import torch.utils.data
 from loguru import logger
-from tqdm import tqdm
 from torch import tensor, Tensor
 from torch.nn.parallel import DistributedDataParallel as DDP
-from pathlib import Path
+from tqdm import tqdm
+
+from .datasets.loader import get_dataloader
+from .datasets.utils import Split
 from .losses import __losses__
 from .methods import FSmethod
 from .methods import __dict__ as all_methods
-from .optim import get_optimizer, get_scheduler
-from .datasets.utils import Split
-from .datasets.loader import get_dataloader
 from .models.ingredient import get_model
 from .models.meta.metamodules.module import MetaModule
+from .optim import get_optimizer, get_scheduler
 from .utils import (
     AverageMeter,
     save_checkpoint,
@@ -39,7 +38,6 @@ from .utils import (
     cleanup,
     main_process,
     copy_config,
-    load_checkpoint,
     make_episode_visualization,
 )
 

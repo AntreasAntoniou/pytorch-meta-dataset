@@ -10,12 +10,9 @@ Copyright 2019, Ross Wightman
 import math
 from functools import partial
 
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
-from .helpers import build_model_with_cfg
 from timm.models.layers import (
     DropBlock2d,
     DropPath,
@@ -26,6 +23,8 @@ from timm.models.layers import (
     get_attn,
     create_classifier,
 )
+
+from .helpers import build_model_with_cfg
 
 
 def _cfg(url="", **kwargs):

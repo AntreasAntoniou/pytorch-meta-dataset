@@ -16,18 +16,18 @@
 # Lint as: python2, python3
 """Interfaces for dataset specifications."""
 
-import os
-import json
 import collections
+import json
+import os
 from typing import Union, List, Set, Any, Dict
 
-import six
 import numpy as np
+import six
 from absl import logging
 from six.moves import cPickle as pkl
 
-from .utils import Split
 from . import imagenet_specification
+from .utils import Split
 
 
 def get_classes(split: Split, classes_per_split: Dict[Split, int]):

@@ -24,15 +24,15 @@ from __future__ import print_function
 
 import os
 
-from absl.testing import parameterized
 import gin
+import numpy as np
+import tensorflow.compat.v1 as tf
+from absl.testing import parameterized
 from meta_dataset.data import config
 from meta_dataset.data import learning_spec
 from meta_dataset.data import pipeline
 from meta_dataset.data import test_utils
 from meta_dataset.data.dataset_spec import DatasetSpecification
-import numpy as np
-import tensorflow.compat.v1 as tf
 
 
 class PipelineTest(tf.test.TestCase, parameterized.TestCase):

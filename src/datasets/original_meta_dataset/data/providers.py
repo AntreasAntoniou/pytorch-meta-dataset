@@ -24,8 +24,9 @@ from __future__ import division
 from __future__ import print_function
 
 import collections
-from meta_dataset import distribute_utils
+
 import tensorflow.compat.v1 as tf
+from meta_dataset import distribute_utils
 
 
 def compute_shot(way, labels):

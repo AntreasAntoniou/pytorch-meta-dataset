@@ -1,13 +1,12 @@
-import time
 import argparse
-from typing import Dict, Optional, Tuple
+import time
+from typing import Optional, Tuple
 
 import torch
 import torch.nn.functional as F
 from torch import Tensor
 
 from .method import FSmethod, collect_episode_metrics
-from ..metrics import Metric
 from .utils import get_one_hot, extract_features, compute_centroids
 
 

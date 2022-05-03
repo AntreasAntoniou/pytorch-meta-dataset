@@ -4,7 +4,6 @@ from dotted_dict import DottedDict
 
 # TODO add short tutorial on how to add a new model in this repo
 from gate.models.clip import CLIP
-from gate.models.tali import TALIModusPrime
 
 
 def _cfg(model_name_to_download, model_root_dir, pretrained, **kwargs):
@@ -82,9 +81,7 @@ class CLIPModel(nn.Module):
         )
 
         self.linear_layer_dict = nn.ModuleDict(
-            dict(
-                image=nn.Linear(768, self.num_classes, bias=True),
-            )
+            dict(image=nn.Linear(768, self.num_classes, bias=True),)
         )
         self.model.model.visual.proj = None
         self.model.model.token_embedding = nn.Identity()
@@ -105,8 +102,7 @@ class CLIPModel(nn.Module):
 
 
 def clip_vit_b_16_pretrained(
-    num_classes: int = 1000,
-    **kwargs,
+    num_classes: int = 1000, **kwargs,
 ):
     """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
@@ -117,8 +113,7 @@ def clip_vit_b_16_pretrained(
 
 
 def clip_vit_b_16_scratch(
-    num_classes: int = 1000,
-    **kwargs,
+    num_classes: int = 1000, **kwargs,
 ):
     """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K

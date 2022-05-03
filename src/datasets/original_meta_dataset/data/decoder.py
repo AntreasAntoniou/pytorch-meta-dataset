@@ -17,7 +17,6 @@
 """Module responsible for decoding image/feature examples."""
 import gin.tf
 import tensorflow.compat.v1 as tf
-from .homemade_transforms import resize_, ResizeMethod
 
 
 def read_single_example(example_string):
