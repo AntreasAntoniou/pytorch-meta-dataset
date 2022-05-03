@@ -180,6 +180,7 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
 
     # ===============> Compute final metrics <=================
     # =========================================================
+    logger.info("Computing final metrics...")
     final_metrics = {}
     for name, values in epoch_metrics.items():
         final_metrics[f"{name}-mean"] = np.mean(values)
@@ -187,8 +188,11 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
 
     # ===============> Save results <=================
     # ===============================================
+    logger.info("Saving results...")
     wandb.log(final_metrics)
+    logger.info(f"Final metrics: {final_metrics}")
     wandb.finish()
+    logger.info("Done!")
     cleanup()
 
 
