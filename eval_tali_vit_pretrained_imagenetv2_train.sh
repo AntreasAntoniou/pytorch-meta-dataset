@@ -4,7 +4,7 @@ for method in config/method/protonet.yaml config/method/finetune.yaml config/met
 do
     for dataset in aircraft traffic_sign dtd omniglot mscoco cu_birds
     do
-
+      echo "python3 eval.py --architecture $architecture --method $method --dataset $dataset --gpus $gpus"
       PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
       --method_config $method \
       --data_config config/data/variable.yaml \
