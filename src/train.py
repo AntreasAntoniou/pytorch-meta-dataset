@@ -10,7 +10,6 @@ import torch
 import torch.utils.data
 from loguru import logger
 from torch import tensor, Tensor
-from torch.backends import cudnn
 from tqdm import tqdm
 
 from .datasets.loader import get_dataloader
@@ -84,7 +83,7 @@ def main_worker(args: argparse.Namespace) -> None:
         random.seed(args.seed)
         torch.manual_seed(args.seed)
         np.random.seed(args.seed)
-        cudnn.deterministic = True
+        torch.backends.cudnn.deterministic = True
 
     # ============ Define loaders ================
 
@@ -120,7 +119,6 @@ def main_worker(args: argparse.Namespace) -> None:
     copy_config(args, exp_dir)
 
     # ============ Define metrics ================
-    batch_time = AverageMeter()
     losses = AverageMeter()
     train_acc = AverageMeter()
 

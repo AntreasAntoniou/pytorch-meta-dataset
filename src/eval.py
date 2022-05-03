@@ -6,7 +6,6 @@ from pathlib import Path
 
 import numpy as np
 import torch
-import torch.backends.cudnn as cudnn
 import wandb
 from loguru import logger
 from tqdm import trange
@@ -85,7 +84,7 @@ def main_worker(args: argparse.Namespace) -> None:
         random.seed(args.seed)
         torch.manual_seed(args.seed)
         np.random.seed(args.seed)
-        cudnn.deterministic = True
+        torch.backends.cudnn.deterministic = True
 
     # ===============> Load data <=================
     # =============================================
