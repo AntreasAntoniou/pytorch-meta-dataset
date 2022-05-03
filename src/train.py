@@ -13,6 +13,7 @@ import torch.utils.data
 import torch.distributed as dist
 import torch.multiprocessing as tmp
 import torch.backends.cudnn as cudnn
+import wandb
 
 from loguru import logger
 from tqdm import tqdm
@@ -66,6 +67,21 @@ def parse_args() -> argparse.Namespace:
 
     if args.opts is not None:
         cfg = merge_cfg_from_list(cfg, args.opts)
+
+    logger.info(f"==> Setting up wandb with args {cfg.__dict__}")
+    wandb.init(
+        project=os.environ.get("WANDB_PROJECT"),
+        entity=os.environ.get("WANDB_ENTITY"),
+        config=cfg.__dict__,
+        job_type="eval",
+        resume="allow",
+        name=f"{cfg.test_source}-"
+        f"{cfg.arch}-"
+        f"{cfg.val_episodes}-"
+        f"{cfg.num_ways}-"
+        f"{cfg.method}-"
+        f"{cfg.seed}",
+    )
 
     return cfg
 
