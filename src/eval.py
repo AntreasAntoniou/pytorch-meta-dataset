@@ -172,7 +172,7 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
             phase_name="test",
         )
         for name, value in episode_metrics.items():
-            epoch_metrics[name].append(value.detach())
+            epoch_metrics[name].append(value)
 
         tqdm_bar.set_description(
             f"accuracy: {episode_metrics['test/accuracy_episode']}"

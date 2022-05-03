@@ -1,9 +1,10 @@
 import torch
 import torch.nn.functional as F
+from torch import Tensor
 
 
-def accuracy(logits, targets):
-    return (logits.argmax(-1) == targets).float().mean()
+def accuracy(logits: Tensor, targets: Tensor) -> Tensor:
+    return torch.mean(targets.eq(logits.argmax(-1)))
 
 
 def cross_entropy_loss(logits, targets):
