@@ -1,0 +1,25 @@
+export architecture=modus_prime_tali_viat_scratch
+gpus=$1
+for dataset in aircraft traffic_sign dtd omniglot mscoco cu_birds
+  do
+    for method in config/method/protonet.yaml config/method/finetune.yaml config/method/simpleshot.yaml config/method/tim_adm.yaml config/method/finetune-with-instance-norm.yaml
+      do
+        echo "python3 eval.py --architecture $architecture --method $method --dataset $dataset --gpus $gpus"
+        PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
+        --method_config $method \
+        --data_config config/data/variable.yaml \
+        --opts \
+         gpus $gpus \
+         base_source ilsvrc_2012_v2 \
+         val_source $dataset \
+         test_source $dataset \
+         arch $architecture \
+         val_episodes 10 \
+         eval_mode test \
+         val_batch_size 1 \
+         loader_version pytorch \
+         load_from_timm True ;\
+      done
+  done
+
+
