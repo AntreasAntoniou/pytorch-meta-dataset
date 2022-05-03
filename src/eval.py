@@ -164,9 +164,10 @@ def main_worker(args: argparse.Namespace) -> None:
     logger.info("Computing final metrics...")
     final_metrics = {}
     for name, values in epoch_metrics.items():
-        logger.info(f"Computing {name}...")
-        final_metrics[f"{name}-mean"] = torch.mean(torch.stack(values, dim=0))
-        final_metrics[f"{name}-std"] = torch.std(torch.stack(values, dim=0))
+        if "test/" in name:
+            logger.info(f"Computing {name}...")
+            final_metrics[f"{name}-mean"] = torch.mean(torch.stack(values, dim=0))
+            final_metrics[f"{name}-std"] = torch.std(torch.stack(values, dim=0))
 
     # ===============> Save results <=================
     # ===============================================
