@@ -33,10 +33,6 @@ from .utils import (
     get_model_dir,
     load_cfg_from_cfg_file,
     merge_cfg_from_list,
-    find_free_port,
-    setup,
-    cleanup,
-    main_process,
     copy_config,
     make_episode_visualization,
 )
@@ -111,16 +107,11 @@ def meta_val(
     return episode_acc, n_episodes
 
 
-def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
-    logger.info(f"==> Running process rank {rank}.")
-    logger.info(pformat(args))
-    if torch.cuda.is_available():
-        setup(args.port, rank, world_size)
-    device: int = rank
+def main_worker(args: argparse.Namespace) -> None:
+    logger.info(args)
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     if args.seed is not None:
-        rank_seed = 0 if rank == "cpu" else rank
-        args.seed += rank_seed
         random.seed(args.seed)
         torch.manual_seed(args.seed)
         np.random.seed(args.seed)
@@ -132,7 +123,6 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
         args=args,
         source=args.base_source,
         batch_size=args.batch_size,
-        world_size=world_size,
         split=Split["TRAIN"],
         episodic=args.episodic_training,
         version=args.loader_version,
@@ -142,7 +132,6 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
         args=args,
         source=args.val_source,
         batch_size=args.val_batch_size,
-        world_size=world_size,
         split=Split["VALID"],
         episodic=True,
         version=args.loader_version,
@@ -151,21 +140,12 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     # ============ Define model ================
 
     num_classes = args.num_ways if args.episodic_training else num_classes
-    if main_process(args):
-        logger.info(
-            "=> Creating model '{}' with {} classes".format(args.arch, num_classes)
-        )
-    model = get_model(args=args, num_classes=num_classes).to(rank)
-    if not isinstance(model, MetaModule) and world_size > 1:
-        model = nn.SyncBatchNorm.convert_sync_batchnorm(model)
-        model = DDP(model, device_ids=[rank])
+    model = get_model(args=args, num_classes=num_classes).to(device)
 
-    if main_process(args):
-        logger.info(
-            "Number of model parameters: {}".format(
-                sum([p.data.nelement() for p in model.parameters()])
-            )
-        )
+    logger.info(
+        f"Number of model parameters: "
+        f"{sum(p.data.nelement() for p in model.parameters())}"
+    )
 
     exp_dir = get_model_dir(args)
     copy_config(args, exp_dir)
@@ -175,15 +155,12 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     losses = AverageMeter()
     train_acc = AverageMeter()
 
-    if main_process(args):
-        metrics: Dict[str, Tensor] = {
-            "train_loss": torch.zeros(
-                args.num_updates // args.print_freq, dtype=torch.float32
-            ),
-            "val_acc": torch.zeros(
-                args.num_updates // args.eval_freq, dtype=torch.float32
-            ),
-        }
+    metrics: Dict[str, Tensor] = {
+        "train_loss": torch.zeros(
+            args.num_updates // args.print_freq, dtype=torch.float32
+        ),
+        "val_acc": torch.zeros(args.num_updates // args.eval_freq, dtype=torch.float32),
+    }
 
     # ============ Optimizer ================
 
@@ -216,7 +193,6 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
 
         # ======== Forward / Backward pass =========
 
-        t0 = time.time()
         if args.episodic_training:
             support, query, support_labels, target = data
             support, support_labels = support.to(device), support_labels.to(device)
@@ -245,14 +221,9 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
 
         # ============ Log metrics ============
         b_size = tensor([args.batch_size]).to(device)  # type: ignore
-        if args.distributed:
-            dist.all_reduce(b_size)
-            dist.all_reduce(loss)
-        if main_process(args):
-            loss = loss.sum() / b_size
-            losses.update(loss.item(), i == 0)
-            batch_time.update(time.time() - t0, i == 0)
-            t0 = time.time()
+
+        loss = loss.sum() / b_size
+        losses.update(loss.item(), i == 0)
 
         # ============ Validation ============
         if i % args.eval_freq == 0:
@@ -265,29 +236,28 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
             is_best = val_acc > best_val_acc1
             best_val_acc1 = max(val_acc, best_val_acc1)
 
-            if main_process(args):
-                save_checkpoint(
-                    state={
-                        "iter": i,
-                        "arch": args.arch,
-                        "state_dict": model.state_dict(),
-                        "best_prec1": best_val_acc1,
-                    },
-                    is_best=is_best,
-                    folder=exp_dir,
-                )
+            save_checkpoint(
+                state={
+                    "iter": i,
+                    "arch": args.arch,
+                    "state_dict": model.state_dict(),
+                    "best_prec1": best_val_acc1,
+                },
+                is_best=is_best,
+                folder=exp_dir,
+            )
 
-                for k in metrics:
-                    if "val" in k:
-                        metrics[k][int(i / args.eval_freq)] = eval(k)
+            for k in metrics:
+                if "val" in k:
+                    metrics[k][int(i / args.eval_freq)] = eval(k)
 
-                for k, e in metrics.items():
-                    path = os.path.join(exp_dir, f"{k}.npy")
-                    np.save(path, e.cpu().numpy())
+            for k, e in metrics.items():
+                path = os.path.join(exp_dir, f"{k}.npy")
+                np.save(path, e.cpu().numpy())
 
         # ============ logger.info / log metrics ============
 
-        if i % args.print_freq == 0 and main_process(args):
+        if i % args.print_freq == 0:
             logger.info(
                 "Iteration: [{0}/{1}]\t"
                 "Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t"
@@ -320,8 +290,6 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
                 soft_preds[0].cpu().numpy(),
                 path,
             )
-
-    cleanup()
 
 
 if __name__ == "__main__":

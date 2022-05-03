@@ -174,7 +174,6 @@ def main_worker(args: argparse.Namespace) -> None:
     logger.info(f"Final metrics: {final_metrics}")
     wandb.finish()
     logger.info("Done!")
-    cleanup()
 
 
 if __name__ == "__main__":
