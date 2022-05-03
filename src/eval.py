@@ -72,11 +72,11 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     """
     logger.info(f"==> Running process rank {rank}.")
     setup(args.port, rank, world_size)
-    logger.info(f"==> Setting up wandb with args {vars(args)}")
+    logger.info(f"==> Setting up wandb with args {vars(args[1])}")
     wandb.init(
         project=os.environ.get("WANDB_PROJECT"),
         entity=os.environ.get("WANDB_ENTITY"),
-        config=vars(args),
+        config=vars(args[1]),
         job_type="eval",
         resume="allow",
         name=f"{args.test_source}-"
