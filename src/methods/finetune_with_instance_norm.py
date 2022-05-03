@@ -107,7 +107,7 @@ class FinetuneWithInstanceNorm(FSmethod):
             print(f"Shape of support: {support.shape}, query: {query.shape}")
             input_instance_norm = nn.InstanceNorm2d(
                 support.shape[2], affine=True, track_running_stats=True
-            )
+            ).to(device)
 
             support_norm = input_instance_norm(
                 support.view(-1, *support.shape[2:])
