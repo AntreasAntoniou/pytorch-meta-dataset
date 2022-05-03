@@ -10,7 +10,7 @@ do
       --method_config $method \
       --data_config config/data/variable.yaml \
       --opts \
-       gpus=$gpus \
+       gpus $gpus \
        base_source ilsvrc_2012_v2 \
        val_source $dataset \
        test_source $dataset \
