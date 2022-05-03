@@ -172,7 +172,7 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
             phase_name="test",
         )
         for name, value in episode_metrics.items():
-            epoch_metrics[name].append(value)
+            epoch_metrics[name].append(value.detach())
 
         tqdm_bar.set_description(
             f"accuracy: {episode_metrics['test/accuracy_episode']}"
@@ -183,8 +183,8 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     logger.info("Computing final metrics...")
     final_metrics = {}
     for name, values in epoch_metrics.items():
-        final_metrics[f"{name}-mean"] = np.mean(values)
-        final_metrics[f"{name}-std"] = np.std(values)
+        final_metrics[f"{name}-mean"] = torch.mean(torch.stack(values, dim=0))
+        final_metrics[f"{name}-std"] = torch.std(torch.stack(values, dim=0))
 
     # ===============> Save results <=================
     # ===============================================
