@@ -5,3 +5,4 @@ from .simpleshot import *
 from .maml import *
 from .protonet import *
 from .finetune import *
+from .finetune_with_instance_norm import *
