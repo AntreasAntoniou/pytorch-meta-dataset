@@ -2,7 +2,7 @@ export architecture=vit_base_patch16_224
 gpus=$1
 for dataset in aircraft traffic_sign dtd omniglot mscoco cu_birds
   do
-    for method in config/method/protonet.yaml config/method/finetune.yaml config/method/finetune-all.yaml config/method/finetune-with-instance-norm.yaml config/method/finetune-with-instance-norm-all.yaml config/method/simpleshot.yaml config/method/maml.yaml config/method/tim_adm.yaml
+    for method in config/method/protonet.yaml config/method/finetune.yaml config/method/finetune_all.yaml config/method/finetune-with-instance-norm.yaml config/method/finetune-with-instance-norm-all.yaml config/method/simpleshot.yaml config/method/maml.yaml config/method/tim_adm.yaml
       do
         echo "python3 eval.py --architecture $architecture --method $method --dataset $dataset --gpus $gpus"
         PYTHONHASHSEED=0 python -m src.eval  --base_config config/base.yaml \
