@@ -85,4 +85,4 @@ METHOD:
     episodic_training: False
 
 DISTRIBUTED:
-    gpus: [0]
+    gpus: [0, 1]
