@@ -109,11 +109,11 @@ class FinetuneWithInstanceNorm(FSmethod):
             )
 
             support_norm = input_instance_norm(
-                support.view(-1, **support.shape[2:])
-            ).view(**support.shape)
+                support.view(-1, *support.shape[2:])
+            ).view(support.shape)
 
-            query_norm = input_instance_norm(query.view(-1, **query.shape[2:])).view(
-                **query.shape
+            query_norm = input_instance_norm(query.view(-1, *query.shape[2:])).view(
+                query.shape
             )
 
             feat_s, feat_q = extract_features(
@@ -164,11 +164,11 @@ class FinetuneWithInstanceNorm(FSmethod):
             model.train()
 
             support_norm = input_instance_norm(
-                support.view(-1, **support.shape[2:])
-            ).view(**support.shape)
+                support.view(-1, *support.shape[2:])
+            ).view(support.shape)
 
-            query_norm = input_instance_norm(query.view(-1, **query.shape[2:])).view(
-                **query.shape
+            query_norm = input_instance_norm(query.view(-1, *query.shape[2:])).view(
+                query.shape
             )
             feat_s, feat_q = extract_features(
                 self.extract_batch_size, support_norm, query_norm, model
