@@ -188,7 +188,7 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
     # ===============> Save results <=================
     # ===============================================
     wandb.log(final_metrics)
-
+    wandb.finish()
     cleanup()
 
 
