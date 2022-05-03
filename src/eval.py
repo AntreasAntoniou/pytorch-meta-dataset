@@ -171,36 +171,8 @@ def main_worker(rank: int, world_size: int, args: argparse.Namespace) -> None:
 
         tqdm_bar.set_description("Acc {:.2f}".format(100 * acc / (i + 1)))
 
-        # ======> Plot inference metrics <=======
-        if i % args.plot_freq == 0 and args.eval_mode == "test" and args.iter > 1:
-            path = os.path.join(
-                exp_root, f"{str(args.base_source)}->{str(args.test_source)}.pdf"
-            )
-            plot_metrics(metrics, path, task_ids[1], args)
+        print(metrics)
 
-        # =======> Visualize a randomly chosen episode <==========
-        if args.visu and i % args.visu_freq == 0 and args.eval_mode == "test":
-            visu_path = os.path.join(exp_root, "episode_samples", args.loader_version)
-            os.makedirs(visu_path, exist_ok=True)
-            path = os.path.join(visu_path, f"visu_{i}.png")
-            make_episode_visualization(
-                args,
-                support[0].cpu().numpy(),
-                query[0].cpu().numpy(),
-                support_labels[0].cpu().numpy(),
-                query_labels[0].cpu().numpy(),
-                soft_preds_q[0].cpu().numpy(),
-                path,
-            )
-
-        # ======> Plot metrics <=======
-        if i % args.plot_freq == 0:
-            update_csv(
-                args=args,
-                metrics=metrics,
-                task_id=i + 1,
-                path=os.path.join(exp_root, f"{args.eval_mode}.csv"),
-            )
     cleanup()
 
 
@@ -208,18 +180,10 @@ def update_csv(args: argparse.Namespace, task_id: int, metrics: dict, path: str)
     if "Acc" not in metrics:
         raise ValueError("Cannot save csv result without Accuracy metric")
 
-    # res = OrderedDict()
-    try:
-        res = pd.read_csv(path)
-    except FileNotFoundError:
-        res = pd.DataFrame({})
-
-    records = res.to_dict("records")
     l2n_mean, l2n_conf = compute_confidence_interval(
         metrics["Acc"].values[:task_id, -1]
     )
 
-    # If entry did not exist, just create it
     new_entry = {param: args[param] for param in args.hyperparams}
     new_entry["task"] = task_id
     new_entry["acc"] = round(l2n_mean, 4)
