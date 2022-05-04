@@ -85,9 +85,7 @@ class FinetuneWithInstanceNorm(FewShotMethod):
                 query.shape
             )
 
-            feat_s, feat_q = extract_features(
-                self.extract_batch_size, support_norm, query_norm, model
-            )
+            feat_s, feat_q = extract_features(support_norm, query_norm, model)
 
             classifier = nn.Linear(feat_s.size(-1), num_classes, bias=False).to(device)
             if self.weight_norm:
@@ -139,13 +137,9 @@ class FinetuneWithInstanceNorm(FewShotMethod):
             )
             if not self.finetune_all_layers:
                 with torch.no_grad():
-                    feat_s, feat_q = extract_features(
-                        self.extract_batch_size, support_norm, query_norm, model
-                    )
+                    feat_s, feat_q = extract_features(support_norm, query_norm, model)
             else:
-                feat_s, feat_q = extract_features(
-                    self.extract_batch_size, support_norm, query_norm, model
-                )
+                feat_s, feat_q = extract_features(support_norm, query_norm, model)
             if self.cosine_head:
                 feat_s = F.normalize(feat_s, dim=-1)
                 feat_q = F.normalize(feat_q, dim=-1)

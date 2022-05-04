@@ -219,9 +219,7 @@ class TIM_ADM(TIM):
         # Metric dic
         num_classes = y_s.unique().size(0)
         with torch.no_grad():
-            feat_s, feat_q = extract_features(
-                self.extract_batch_size, support, query, model
-            )
+            feat_s, feat_q = extract_features(support, query, model)
 
         y_s_one_hot = get_one_hot(y_s, num_classes)
 

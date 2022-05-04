@@ -39,7 +39,7 @@ class ProtoNet(FewShotMethod):
         num_classes = y_s.unique().size(0)
 
         with torch.set_grad_enabled(self.training):
-            z_s, z_q = extract_features(0, support, query, model)
+            z_s, z_q = extract_features(support, query, model)
 
         centroids = compute_centroids(z_s, y_s)  # [batch, num_class, d]
         l2_distance = torch.cdist(z_q, centroids) ** 2  # [batch, q_shot, num_class]

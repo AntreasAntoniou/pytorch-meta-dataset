@@ -62,9 +62,7 @@ class SimpleShot(FewShotMethod):
 
         model.eval()
         with torch.no_grad():
-            feat_s, feat_q = extract_features(
-                self.extract_batch_size, support, query, model
-            )
+            feat_s, feat_q = extract_features(support, query, model)
 
         # Perform required normalizations
         feat_s = F.normalize(feat_s, dim=-1)
