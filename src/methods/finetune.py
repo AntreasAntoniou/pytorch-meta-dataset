@@ -83,9 +83,7 @@ class Finetune(FewShotMethod):
 
         # Initialize classifier
         with torch.no_grad():
-            feat_s, feat_q = extract_features(
-                self.extract_batch_size, support, query, model
-            )
+            feat_s, feat_q = extract_features(support, query, model)
 
             classifier = nn.Linear(feat_s.size(-1), num_classes, bias=False).to(device)
             if self.weight_norm:
