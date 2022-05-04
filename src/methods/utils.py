@@ -47,7 +47,7 @@ def extract_features(support: Tensor, query: Tensor, model: nn.Module):
     """
     # Extract support and query features
     shots_s, C, H, W = support.size()
-    shots_q = query.size(1)
+    shots_q = query.size(0)
 
     feat_s = model(support.view(shots_s, C, H, W), feature=True)
     feat_q = model(query.view(shots_q, C, H, W), feature=True)
