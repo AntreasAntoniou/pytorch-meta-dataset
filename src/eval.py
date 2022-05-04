@@ -167,6 +167,10 @@ def main_worker(args: argparse.Namespace) -> None:
         support_labels = support_labels.to(device)
         query_labels = query_labels.to(device)
         task_ids = (i * args.val_batch_size, (i + 1) * args.val_batch_size)
+        logger.info(
+            f"Input shapes {support.shape}, {support_labels.shape}, "
+            f"{query.shape}, {query_labels.shape}"
+        )
         episode_metrics = method(
             model=model,
             task_ids=task_ids,
