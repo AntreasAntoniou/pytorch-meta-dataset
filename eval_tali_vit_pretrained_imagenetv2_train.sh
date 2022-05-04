@@ -10,7 +10,6 @@ for dataset in aircraft traffic_sign dtd omniglot mscoco cu_birds
         --method_config $method \
         --data_config config/data/variable.yaml \
         --opts \
-         gpus $CUDA_VISIBLE_DEVICES \
          base_source ilsvrc_2012_v2 \
          val_source $dataset \
          test_source $dataset \

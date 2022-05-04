@@ -12,7 +12,6 @@ for architecture in clip_vit_b_16_pretrained vit_base_patch16_224 modus_prime_ta
             --method_config $method \
             --data_config config/data/variable.yaml \
             --opts \
-             gpus $gpus \
              base_source ilsvrc_2012_v2 \
              val_source $dataset \
              test_source $dataset \
