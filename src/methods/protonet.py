@@ -52,5 +52,5 @@ class ProtoNet(FewShotMethod):
             query_logits=log_probas,
             query_targets=y_q,
             phase_name=phase_name,
-            step_idx=task_ids[0],
+            step_idx=task_ids,
         )
