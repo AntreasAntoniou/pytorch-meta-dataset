@@ -9,4 +9,4 @@ METHOD:
   finetune_cosine_head: True
   finetune_weight_norm: True
   hyperparams: ['method', 'arch', 'base_source', 'test_source', 'finetune_all_layers']
-  finetune_weight_decay: 0.000002
+  finetune_weight_decay: 0.0001
