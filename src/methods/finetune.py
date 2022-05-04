@@ -120,9 +120,7 @@ class Finetune(FewShotMethod):
         for step_idx in range(1, self.iter):
             if self.finetune_all_layers:
                 model.train()
-                feat_s, feat_q = extract_features(
-                    self.extract_batch_size, support, query, model
-                )
+                feat_s, feat_q = extract_features(support, query, model)
                 if self.cosine_head:
                     feat_s = F.normalize(feat_s, dim=-1)
                     feat_q = F.normalize(feat_q, dim=-1)
