@@ -169,10 +169,9 @@ class TIM_ADM(TIM):
         updates :
             self.weights : Tensor of shape [n_task, num_class, feature_dim]
         """
-        n_tasks = support.size(0)
 
-        P_s = self.get_logits(support).softmax(2)
-        P_q = self.get_logits(query).softmax(2)
+        P_s = self.get_logits(support).softmax(1)
+        P_q = self.get_logits(query).softmax(1)
 
         src_weight = self.loss_weights[0] / (
             self.loss_weights[1] + self.loss_weights[2]
@@ -186,16 +185,16 @@ class TIM_ADM(TIM):
                 - P_s.transpose(1, 2).matmul(support)
             )
         )
-        src_norm = src_weight * y_s_one_hot.sum(1).view(n_tasks, -1, 1)  # noqa: E127
+        src_norm = src_weight * y_s_one_hot.sum(0).view(-1, 1)  # noqa: E127
 
         qry_part = qry_weight * (
             self.Q.transpose(1, 2).matmul(query)
             + (
-                self.weights * P_q.sum(1, keepdim=True).transpose(1, 2)
-                - P_q.transpose(1, 2).matmul(query)
+                self.weights * P_q.sum(0, keepdim=True).transpose(0, 1)
+                - P_q.transpose(0, 1).matmul(query)
             )
         )
-        qry_norm = qry_weight * self.Q.sum(1).view(n_tasks, -1, 1)
+        qry_norm = qry_weight * self.Q.sum(1).view(-1, 1)
 
         new_weights = (src_part + qry_part) / (src_norm + qry_norm)
         self.weights = self.weights + self.α * (new_weights - self.weights)
