@@ -72,7 +72,7 @@ EVAL-EPISODES:
     min_ways: 5
     max_ways_upper_bound: 20
     max_num_query: 8
-    max_support_set_size: 128
+    max_support_set_size: 160
     max_support_size_contrib_per_class: 100
     min_log_weight: -0.69314718055994529
     max_log_weight: 0.69314718055994529
