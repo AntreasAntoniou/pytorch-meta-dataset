@@ -2,7 +2,7 @@ METHOD:
   method: 'FinetuneWithInstanceNorm'
   episodic_training: False
   iter: 100
-  finetune_lr: 0.01
+  finetune_lr: 0.00002
   temp: 10
   finetune_all_layers: False
   eval_metrics: ['Acc', 'XEnt']
