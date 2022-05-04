@@ -68,7 +68,7 @@ def batch_feature_extract(
     model: nn.Module, t: Tensor, bs: int, device: torch.device
 ) -> Tensor:
     shots: int
-    n_tasks, shots, C, H, W = t.size()
+    shots, C, H, W = t.size()
 
     feat: Tensor
     feats: List[Tensor] = []
