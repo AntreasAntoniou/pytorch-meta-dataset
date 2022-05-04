@@ -36,6 +36,36 @@ default_cfgs = {
         model_root_dir="tali_models/",
         pretrained=True,
     ),
+    "modus_prime_tali_viat_pretrained_v187": _cfg(
+        input_shape_dict=DottedDict(
+            image=DottedDict(shape=DottedDict(channels=3, width=288, length=176)),
+        ),
+        model_name_to_download="model-deep-salad-17",
+        project_name="machinelearningbrewery/godzilla-gcp-experiments",
+        model_version="v187",
+        model_root_dir="tali_models/",
+        pretrained=True,
+    ),
+    "modus_prime_tali_viat_pretrained_v188": _cfg(
+        input_shape_dict=DottedDict(
+            image=DottedDict(shape=DottedDict(channels=3, width=288, length=176)),
+        ),
+        model_name_to_download="model-deep-salad-17",
+        project_name="machinelearningbrewery/godzilla-gcp-experiments",
+        model_version="v188",
+        model_root_dir="tali_models/",
+        pretrained=True,
+    ),
+    "modus_prime_tali_viat_pretrained_v189": _cfg(
+        input_shape_dict=DottedDict(
+            image=DottedDict(shape=DottedDict(channels=3, width=288, length=176)),
+        ),
+        model_name_to_download="model-deep-salad-17",
+        project_name="machinelearningbrewery/godzilla-gcp-experiments",
+        model_version="v189",
+        model_root_dir="tali_models/",
+        pretrained=True,
+    ),
     "modus_prime_tali_viat_scratch": _cfg(
         input_shape_dict=DottedDict(
             image=DottedDict(shape=DottedDict(channels=3, width=288, length=176)),
@@ -103,6 +133,39 @@ def modus_prime_tali_viat_pretrained(
     Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
     """
     config = default_cfgs["modus_prime_tali_viat_pretrained"]
+    config["num_classes"] = num_classes
+    return TALIMP(**config)
+
+
+def modus_prime_tali_viat_pretrained_v187(
+    num_classes: int = 1000, **kwargs,
+):
+    """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
+    Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
+    """
+    config = default_cfgs["modus_prime_tali_viat_pretrained_v187"]
+    config["num_classes"] = num_classes
+    return TALIMP(**config)
+
+
+def modus_prime_tali_viat_pretrained_v188(
+    num_classes: int = 1000, **kwargs,
+):
+    """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
+    Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
+    """
+    config = default_cfgs["modus_prime_tali_viat_pretrained_v188"]
+    config["num_classes"] = num_classes
+    return TALIMP(**config)
+
+
+def modus_prime_tali_viat_pretrained_v189(
+    num_classes: int = 1000, **kwargs,
+):
+    """ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
+    Weights taken from: https://github.com/Alibaba-MIIL/ImageNet21K
+    """
+    config = default_cfgs["modus_prime_tali_viat_pretrained_v189"]
     config["num_classes"] = num_classes
     return TALIMP(**config)
 
