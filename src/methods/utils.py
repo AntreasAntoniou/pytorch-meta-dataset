@@ -36,7 +36,7 @@ def get_one_hot(y_s: Tensor, num_classes: int):
     return one_hot
 
 
-def extract_features(bs: int, support: Tensor, query: Tensor, model: nn.Module):
+def extract_features(support: Tensor, query: Tensor, model: nn.Module):
     """
     Extract features from support and query set using the provided model
         args:
@@ -48,18 +48,11 @@ def extract_features(bs: int, support: Tensor, query: Tensor, model: nn.Module):
     # Extract support and query features
     shots_s, C, H, W = support.size()
     shots_q = query.size(1)
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    if bs > 0:
-        feat_s = batch_feature_extract(model, support, bs, device)
-        feat_q = batch_feature_extract(model, query, bs, device)
-    else:
-        support = support.to(device)
-        query = query.to(device)
-        feat_s = model(support.view(shots_s, C, H, W), feature=True)
-        feat_q = model(query.view(shots_q, C, H, W), feature=True)
-        feat_s = feat_s.view(shots_s, -1)
-        feat_q = feat_q.view(shots_q, -1)
+    feat_s = model(support.view(shots_s, C, H, W), feature=True)
+    feat_q = model(query.view(shots_q, C, H, W), feature=True)
+    feat_s = feat_s.view(shots_s, -1)
+    feat_q = feat_q.view(shots_q, -1)
 
     return feat_s, feat_q
 

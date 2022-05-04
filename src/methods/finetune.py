@@ -23,7 +23,6 @@ class Finetune(FewShotMethod):
     def __init__(self, args: argparse.Namespace):
         self.temp = args.temp
         self.iter = args.iter
-        self.extract_batch_size = args.extract_batch_size
         self.finetune_all_layers = args.finetune_all_layers
         self.cosine_head = args.finetune_cosine_head
         self.weight_norm = args.finetune_weight_norm
