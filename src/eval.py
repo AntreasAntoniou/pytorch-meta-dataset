@@ -140,6 +140,27 @@ def main_worker(args: argparse.Namespace) -> None:
     for i in tqdm_bar:
         # ======> Reload model checkpoint (some methods may modify model) <=======
         support, query, support_labels, query_labels = next(iter_loader)
+        num_support_set_items = support.shape[1]
+        num_support_set_items_causing_multi_gpu_failure = (
+            num_support_set_items % torch.cuda.device_count()
+        )
+        if num_support_set_items_causing_multi_gpu_failure > 0:
+            support = support[:, :-num_support_set_items_causing_multi_gpu_failure]
+            support_labels = support_labels[
+                :, :-num_support_set_items_causing_multi_gpu_failure
+            ]
+
+        num_query_set_items = query.shape[1]
+        num_query_set_items_causing_multi_gpu_failure = (
+            num_query_set_items % torch.cuda.device_count()
+        )
+
+        if num_query_set_items_causing_multi_gpu_failure > 0:
+            query = query[:, :-num_query_set_items_causing_multi_gpu_failure]
+            query_labels = query_labels[
+                :, -num_query_set_items_causing_multi_gpu_failure
+            ]
+
         # logger.info(query_labels.size())
         support = support.to(device)
         query = query.to(device)
