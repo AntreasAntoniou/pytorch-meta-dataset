@@ -33,32 +33,6 @@ class FinetuneWithInstanceNorm(FewShotMethod):
 
         super().__init__(args)
 
-    def record_info(
-        self,
-        metrics: Optional[Dict],
-        task_ids: Optional[Tuple],
-        iteration: int,
-        preds_q: Tensor,
-        probs_s: Tensor,
-        y_q: Tensor,
-        y_s: Tensor,
-    ) -> None:
-        """
-        inputs:
-            support : tensor of shape [n_task, s_shot, feature_dim]
-            query : tensor of shape [n_task, q_shot, feature_dim]
-            y_s : tensor of shape [n_task, s_shot]
-            y_q : tensor of shape [n_task, q_shot] :
-        """
-        if metrics:
-            kwargs = {"preds": preds_q, "gt": y_q, "probs_s": probs_s, "gt_s": y_s}
-
-            assert task_ids is not None
-            for metric_name in metrics:
-                metrics[metric_name].update(
-                    task_ids[0], task_ids[1], iteration, **kwargs
-                )
-
     def _do_data_dependent_init(self, classifier: nn.Module, feat_s: Tensor):
         """Returns ops for the data-dependent init of g and maybe b_fc."""
         w_fc_normalized = F.normalize(classifier.weight_v, dim=1)  # [num_classes, d]
@@ -93,16 +67,6 @@ class FinetuneWithInstanceNorm(FewShotMethod):
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         )
 
-        n_tasks = support.size(0)
-        if n_tasks > 1:
-            raise ValueError(
-                "Finetune method can only deal with 1 task at a time. \
-                             Currently {} tasks.".format(
-                    n_tasks
-                )
-            )
-        y_s = y_s[0]
-        y_q = y_q[0]
         num_classes = y_s.unique().size(0)
         y_s_one_hot = get_one_hot(y_s, num_classes)
 
@@ -110,14 +74,14 @@ class FinetuneWithInstanceNorm(FewShotMethod):
         with torch.no_grad():
             print(f"Shape of support: {support.shape}, query: {query.shape}")
             input_instance_norm = nn.InstanceNorm2d(
-                support.shape[2], affine=True, track_running_stats=True
+                support.shape[1], affine=True, track_running_stats=True
             ).to(device)
 
             support_norm = input_instance_norm(
-                support.view(-1, *support.shape[2:])
+                support.view(-1, *support.shape[1:])
             ).view(support.shape)
 
-            query_norm = input_instance_norm(query.view(-1, *query.shape[2:])).view(
+            query_norm = input_instance_norm(query.view(-1, *query.shape[1:])).view(
                 query.shape
             )
 
@@ -135,15 +99,15 @@ class FinetuneWithInstanceNorm(FewShotMethod):
                 feat_s = F.normalize(feat_s, dim=-1)
                 feat_q = F.normalize(feat_q, dim=-1)
 
-            logits_q = self.temp * classifier(feat_q[0])
-            logits_s = self.temp * classifier(feat_s[0])
+            logits_q = self.temp * classifier(feat_q)
+            logits_s = self.temp * classifier(feat_s)
             collect_episode_per_step_metrics(
                 support_logits=logits_s,
                 support_targets=y_s,
                 query_logits=logits_q,
                 query_targets=y_q,
                 phase_name=phase_name,
-                task_idx=task_ids[0],
+                task_idx=task_ids,
                 step_idx=0,
             )
 
@@ -167,10 +131,10 @@ class FinetuneWithInstanceNorm(FewShotMethod):
             model.train()
 
             support_norm = input_instance_norm(
-                support.view(-1, *support.shape[2:])
+                support.view(-1, *support.shape[1:])
             ).view(support.shape)
 
-            query_norm = input_instance_norm(query.view(-1, *query.shape[2:])).view(
+            query_norm = input_instance_norm(query.view(-1, *query.shape[1:])).view(
                 query.shape
             )
             if not self.finetune_all_layers:
@@ -186,7 +150,7 @@ class FinetuneWithInstanceNorm(FewShotMethod):
                 feat_s = F.normalize(feat_s, dim=-1)
                 feat_q = F.normalize(feat_q, dim=-1)
 
-            logits_s = self.temp * classifier(feat_s[0])
+            logits_s = self.temp * classifier(feat_s)
             probs_s = logits_s.softmax(-1)
             loss = -(y_s_one_hot * probs_s.log()).sum(-1).mean(-1)
 
@@ -195,7 +159,7 @@ class FinetuneWithInstanceNorm(FewShotMethod):
             optimizer.step()
 
             with torch.no_grad():
-                logits_q = self.temp * classifier(feat_q[0])
+                logits_q = self.temp * classifier(feat_q)
 
                 collect_episode_per_step_metrics(
                     support_logits=logits_s,
@@ -203,7 +167,7 @@ class FinetuneWithInstanceNorm(FewShotMethod):
                     query_logits=logits_q,
                     query_targets=y_q,
                     phase_name=phase_name,
-                    task_idx=task_ids[0],
+                    task_idx=task_ids,
                     step_idx=step_idx,
                 )
 
@@ -211,5 +175,5 @@ class FinetuneWithInstanceNorm(FewShotMethod):
             query_logits=logits_q,
             query_targets=y_q,
             phase_name=phase_name,
-            step_idx=task_ids[0],
+            step_idx=task_ids,
         )

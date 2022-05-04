@@ -137,7 +137,7 @@ def main_worker(args: argparse.Namespace) -> None:
     # ==============================================
     tqdm_bar = trange(int(args.val_episodes / args.val_batch_size))
     epoch_metrics = defaultdict(list)
-    for i in tqdm_bar:
+    for task_idx in tqdm_bar:
         # ======> Reload model checkpoint (some methods may modify model) <=======
         support, query, support_labels, query_labels = next(iter_loader)
         num_support_set_items = support.shape[1]
@@ -162,18 +162,17 @@ def main_worker(args: argparse.Namespace) -> None:
             ]
 
         # logger.info(query_labels.size())
-        support = support.to(device)
-        query = query.to(device)
-        support_labels = support_labels.to(device)
-        query_labels = query_labels.to(device)
-        task_ids = (i * args.val_batch_size, (i + 1) * args.val_batch_size)
+        support = support[0].to(device)
+        query = query[0].to(device)
+        support_labels = support_labels[0].to(device)
+        query_labels = query_labels[0].to(device)
         logger.info(
             f"Input shapes {support.shape}, {support_labels.shape}, "
             f"{query.shape}, {query_labels.shape}"
         )
         episode_metrics = method(
             model=model,
-            task_ids=task_ids,
+            task_ids=task_idx,
             support=support,
             query=query,
             y_s=support_labels,

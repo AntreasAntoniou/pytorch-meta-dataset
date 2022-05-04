@@ -79,16 +79,6 @@ class Finetune(FewShotMethod):
             torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         )
 
-        n_tasks = support.size(0)
-        if n_tasks > 1:
-            raise ValueError(
-                "Finetune method can only deal with 1 task at a time. \
-                             Currently {} tasks.".format(
-                    n_tasks
-                )
-            )
-        y_s = y_s[0]
-        y_q = y_q[0]
         num_classes = y_s.unique().size(0)
         y_s_one_hot = get_one_hot(y_s, num_classes)
 
@@ -108,8 +98,8 @@ class Finetune(FewShotMethod):
                 feat_s = F.normalize(feat_s, dim=-1)
                 feat_q = F.normalize(feat_q, dim=-1)
 
-            logits_q = self.temp * classifier(feat_q[0])
-            logits_s = self.temp * classifier(feat_s[0])
+            logits_q = self.temp * classifier(feat_q)
+            logits_s = self.temp * classifier(feat_s)
 
         collect_episode_per_step_metrics(
             support_logits=logits_s,
@@ -117,7 +107,7 @@ class Finetune(FewShotMethod):
             query_logits=logits_q,
             query_targets=y_q,
             phase_name=phase_name,
-            task_idx=task_ids[0],
+            task_idx=task_ids,
             step_idx=0,
         )
         # Define optimizer
@@ -140,7 +130,7 @@ class Finetune(FewShotMethod):
                     feat_s = F.normalize(feat_s, dim=-1)
                     feat_q = F.normalize(feat_q, dim=-1)
 
-            logits_s = self.temp * classifier(feat_s[0])
+            logits_s = self.temp * classifier(feat_s)
             probs_s = logits_s.softmax(-1)
             loss = -(y_s_one_hot * probs_s.log()).sum(-1).mean(-1)
 
@@ -149,7 +139,7 @@ class Finetune(FewShotMethod):
             optimizer.step()
 
             with torch.no_grad():
-                logits_q = self.temp * classifier(feat_q[0])
+                logits_q = self.temp * classifier(feat_q)
 
                 collect_episode_per_step_metrics(
                     support_logits=logits_s,
@@ -157,7 +147,7 @@ class Finetune(FewShotMethod):
                     query_logits=logits_q,
                     query_targets=y_q,
                     phase_name=phase_name,
-                    task_idx=task_ids[0],
+                    task_idx=task_ids,
                     step_idx=step_idx,
                 )
 
@@ -165,5 +155,5 @@ class Finetune(FewShotMethod):
             query_logits=logits_q,
             query_targets=y_q,
             phase_name=phase_name,
-            step_idx=task_ids[0],
+            step_idx=task_ids,
         )
