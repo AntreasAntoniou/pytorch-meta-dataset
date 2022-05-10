@@ -1,0 +1,5 @@
+export TORCH_DISTRIBUTED_DEBUG=DETAIL
+
+export WANDB_API_KEY=42f577dbd00642a0a9da3e940bc0f16ab3fc7506
+export WANDB_ENTITY=machinelearningbrewery
+export WANDB_PROJECT=meta-dataset-benchmark
